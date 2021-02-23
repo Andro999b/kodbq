@@ -11,6 +11,7 @@ subprojects {
     apply { plugin("kotlin") }
     apply { plugin("maven-publish") }
 
+    group = "io.hatis"
     version = "0.0.1"
 
     repositories {
@@ -25,7 +26,7 @@ subprojects {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/Andro999/kotlin-database-utils")
+                url = uri("https://maven.pkg.github.com/Andro999b/kotlin-database-utils")
                 credentials {
                     username = project.findProperty("gpr.user") as String? ?: System.getenv("GITPKG_USER")
                     password = project.findProperty("gpr.key") as String? ?: System.getenv("GITPKG_TOKEN")
