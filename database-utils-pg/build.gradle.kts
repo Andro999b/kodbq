@@ -1,3 +1,3 @@
 dependencies {
-    implementation(project(":database-utils-core"))
+    api(project(":database-utils-core"))
 }

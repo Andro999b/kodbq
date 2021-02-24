@@ -10,7 +10,7 @@ repositories {
 }
 
 
-val releaseVersion = "0.0.1"
+val releaseVersion = "0.0.7"
 version = releaseVersion
 
 subprojects {
@@ -27,6 +27,13 @@ subprojects {
 
     java {
         withSourcesJar()
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+        kotlinOptions.javaParameters = true
     }
 
     publishing {

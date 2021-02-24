@@ -1,4 +1,4 @@
-package io.hatis.utils.db.io.hatis
+package io.hatis.db
 
 class InsertBuilder(
     val tableName: String,

@@ -1,4 +1,4 @@
-package io.hatis.utils.db.io.hatis
+package io.hatis.db
 
 enum class WhereOps(val op: String) {
     eq("="),
@@ -17,6 +17,7 @@ interface Join: WherePart {
     val separator: String
 }
 data class Column(val columnName: String, val op: WhereOps, val params: Any): WherePart
+data class ColumnRaw(val columnName: String, val op: WhereOps, val raw: String): WherePart
 data class ColumnIsNull(val columnName: String): WherePart
 data class ColumnIsNotNull(val columnName: String): WherePart
 data class Or(override val parts: Collection<WherePart>): Join {

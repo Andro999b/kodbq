@@ -1,7 +1,4 @@
-package io.hatis.utils.db.io.hatis
-
-import io.hatis.db.DeleteBuilder
-import java.lang.IllegalArgumentException
+package io.hatis.db
 
 fun sqlInsert(tableName: String, builderActions: DSLInsertBuilder.() -> Unit): InsertBuilder {
     val dslInsertBuilder = DSLInsertBuilder()
@@ -83,9 +80,9 @@ class DSLUpdateBuilder {
     }
 
     fun where(builderActions: DSLConditionBuilder.() -> Unit) {
-       val  dslConditionBuilder = DSLConditionBuilder()
+        val dslConditionBuilder = DSLConditionBuilder()
         dslConditionBuilder.builderActions()
-        this.dslColumnsBuilder = dslColumnsBuilder
+        this.dslConditionBuilder = dslConditionBuilder
     }
 
     internal fun createUpdateBuilder(tableName: String) = UpdateBuilder(
@@ -97,9 +94,11 @@ class DSLUpdateBuilder {
 
 class DSLSelectBuilder {
     private var dslConditionBuilder: DSLConditionBuilder? = null
+    private var dslAggregationBuilder: DSLAggregationBuilder? = null
     private var columns: Set<String> = emptySet()
     private var sort: SelectBuilder.Sort? = null
     private var limit: SelectBuilder.Limit? = null
+    private var distinct: Boolean = false
 
     fun columns(columns: Set<String>) {
         this.columns = columns
@@ -116,6 +115,18 @@ class DSLSelectBuilder {
         this.dslConditionBuilder = dslConditionBuilder
     }
 
+    fun aggregation(vararg groupBy: String, builderActions: DSLAggregationBuilder.() -> Unit) {
+        val dslAggregationBuilder = DSLAggregationBuilder(groupBy.toSet())
+        dslAggregationBuilder.builderActions()
+        this.dslAggregationBuilder = dslAggregationBuilder
+    }
+
+    fun aggregation(builderActions: DSLAggregationBuilder.() -> Unit) {
+        val dslAggregationBuilder = DSLAggregationBuilder(emptySet())
+        dslAggregationBuilder.builderActions()
+        this.dslAggregationBuilder = dslAggregationBuilder
+    }
+
     fun sort(columnName: String, asc: Boolean = true) {
         this.sort = SelectBuilder.Sort(columnName, asc)
     }
@@ -124,11 +135,11 @@ class DSLSelectBuilder {
         this.limit = this.limit?.copy(count = count) ?: SelectBuilder.Limit(count = count)
     }
 
-    fun from(offset: Int) {
+    fun offset(offset: Int) {
         this.limit = this.limit?.copy(offset = offset) ?: SelectBuilder.Limit(offset)
     }
 
-    fun fromTo(from: Int, to: Int) {
+    fun range(from: Int, to: Int) {
         if(to < from) {
             throw IllegalArgumentException("to < offset")
         }
@@ -140,8 +151,33 @@ class DSLSelectBuilder {
         columns = columns,
         where = dslConditionBuilder?.createWhereCondition(),
         limit = limit,
-        sort = sort
+        sort = sort,
+        distinct = distinct,
+        aggregation = dslAggregationBuilder?.createAggregation()
     )
+}
+
+class DSLAggregationBuilder(
+    private val columns: Set<String>
+) {
+    private val functions: MutableMap<String, SelectBuilder.AggregationFunction> = mutableMapOf()
+
+    fun count(alias: String) = columnFunction("count", "*", alias)
+    fun count(column: String, alias: String) = columnFunction("count", column, alias)
+    fun max(column: String, alias: String) = columnFunction("max", column, alias)
+    fun min(column: String, alias: String) = columnFunction("min", column, alias)
+    fun avg(column: String, alias: String) = columnFunction("avg", column, alias)
+    fun sum(column: String, alias: String) = columnFunction("sum", column, alias)
+
+    fun function(function: String, alias: String) {
+        functions[alias] = SelectBuilder.DBFunction(function)
+    }
+
+    private fun columnFunction(function: String, column: String, alias: String) {
+        functions[alias] = SelectBuilder.ColumnFunction(function, column)
+    }
+
+    internal fun createAggregation() = SelectBuilder.Aggregation(columns, functions)
 }
 
 class DSLConditionBuilder {
@@ -150,6 +186,14 @@ class DSLConditionBuilder {
 
     fun id(value: Any) {
         column("id", WhereOps.eq, value)
+    }
+
+    fun column(columnName: String, value: Any) {
+        columnConditions.add(Column(columnName, WhereOps.eq, value))
+    }
+
+    fun column(columnName: String, value: Collection<Any>) {
+        columnConditions.add(Column(columnName, WhereOps.`in`, value))
     }
 
     fun column(columnName: String, op: WhereOps, value: Any) {
@@ -170,7 +214,7 @@ class DSLConditionBuilder {
         subConditions.add(builder)
     }
 
-    internal fun isNotEmpty() = columnConditions.isNotEmpty()
+    private fun isNotEmpty() = columnConditions.isNotEmpty()
 
     internal fun createWhereCondition(): WherePart {
         val conditions = mutableListOf(this)
