@@ -1,62 +1,64 @@
 package io.hatis.db
 
-fun sqlInsert(tableName: String, builderActions: DSLInsertBuilder.() -> Unit): InsertBuilder {
-    val dslInsertBuilder = DSLInsertBuilder()
+fun sqlInsert(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLInsertBuilder.() -> Unit): InsertBuilder {
+    val dslInsertBuilder = DSLInsertBuilder(mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createInsertBuilder(tableName)
 }
 
-fun sqlUpdate(tableName: String, builderActions: DSLUpdateBuilder.() -> Unit): UpdateBuilder {
-    val dslInsertBuilder = DSLUpdateBuilder()
+fun sqlUpdate(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLUpdateBuilder.() -> Unit): UpdateBuilder {
+    val dslInsertBuilder = DSLUpdateBuilder(mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createUpdateBuilder(tableName)
 }
 
-fun sqlSelect(tableName: String, builderActions: DSLSelectBuilder.() -> Unit): SelectBuilder {
-    val dslInsertBuilder = DSLSelectBuilder()
+fun sqlSelect(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLSelectBuilder.() -> Unit): SelectBuilder {
+    val dslInsertBuilder = DSLSelectBuilder(mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createSelectBuilder(tableName)
 }
 
-fun sqlDelete(tableName: String, builderActions: DSLDeleteBuilder.() -> Unit): DeleteBuilder {
-    val dslInsertBuilder = DSLDeleteBuilder()
+fun sqlDelete(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLDeleteBuilder.() -> Unit): DeleteBuilder {
+    val dslInsertBuilder = DSLDeleteBuilder(mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createDeleteBuilder(tableName)
 }
 
-class DSLDeleteBuilder {
+class DSLDeleteBuilder(private val mode: SqlMode) {
     private lateinit var dslConditionBuilder: DSLConditionBuilder
 
     fun where(builderActions: DSLConditionBuilder.() -> Unit) {
-        dslConditionBuilder = DSLConditionBuilder()
+        dslConditionBuilder = DSLConditionBuilder(mode)
         dslConditionBuilder.builderActions()
     }
 
     internal fun createDeleteBuilder(tableName: String) = DeleteBuilder(
         tableName = tableName,
-        where = dslConditionBuilder.createWhereCondition()
+        where = dslConditionBuilder.createWhereCondition(),
+        mode = mode
     )
 }
 
-class DSLColumnsBuilder {
-    internal val columns: MutableMap<String, Any?> = mutableMapOf()
+class DSLColumnsBuilder(private val mode: SqlMode) {
+    internal val columns: MutableMap<Column, Any?> = mutableMapOf()
 
     fun columns(params: Map<String, Any?>) {
-        columns.putAll(params)
+        columns.putAll(params.mapKeys { (columnName, _) -> Column(columnName, mode) })
     }
 
     fun column(columnName: String, value: Any?) {
-        columns.put(columnName, value)
+        columns[Column(columnName, mode)] = value
     }
 }
 
-class DSLInsertBuilder {
-    private lateinit var dslColumnsBuilder: DSLColumnsBuilder
+class DSLInsertBuilder(private val mode: SqlMode) {
+    private var values: MutableList<Map<Column, Any?>> = mutableListOf()
     private var genKeys: Set<String> = emptySet()
 
     fun values(builderActions: DSLColumnsBuilder.() -> Unit) {
-        dslColumnsBuilder = DSLColumnsBuilder()
+        val dslColumnsBuilder = DSLColumnsBuilder(mode)
         dslColumnsBuilder.builderActions()
+        values.add(dslColumnsBuilder.columns)
     }
 
     fun generatedKeys(vararg keys: String) {
@@ -65,22 +67,23 @@ class DSLInsertBuilder {
 
     internal fun createInsertBuilder(tableName: String) = InsertBuilder(
         tableName = tableName,
-        columns = dslColumnsBuilder.columns,
-        generatedKeys = genKeys
+        values = values,
+        generatedKeys = genKeys,
+        mode = mode
     )
 }
 
-class DSLUpdateBuilder {
+class DSLUpdateBuilder(private val mode: SqlMode) {
     private lateinit var dslColumnsBuilder: DSLColumnsBuilder
     private var dslConditionBuilder: DSLConditionBuilder? = null
 
     fun set(builderActions: DSLColumnsBuilder.() -> Unit) {
-        dslColumnsBuilder = DSLColumnsBuilder()
+        dslColumnsBuilder = DSLColumnsBuilder(mode)
         dslColumnsBuilder.builderActions()
     }
 
     fun where(builderActions: DSLConditionBuilder.() -> Unit) {
-        val dslConditionBuilder = DSLConditionBuilder()
+        val dslConditionBuilder = DSLConditionBuilder(mode)
         dslConditionBuilder.builderActions()
         this.dslConditionBuilder = dslConditionBuilder
     }
@@ -88,41 +91,42 @@ class DSLUpdateBuilder {
     internal fun createUpdateBuilder(tableName: String) = UpdateBuilder(
         tableName = tableName,
         columns = dslColumnsBuilder.columns,
-        where = dslConditionBuilder?.createWhereCondition()
+        where = dslConditionBuilder?.createWhereCondition(),
+        mode = mode
     )
 }
 
-class DSLSelectBuilder {
+class DSLSelectBuilder(private val mode: SqlMode) {
     private var dslConditionBuilder: DSLConditionBuilder? = null
     private var dslAggregationBuilder: DSLAggregationBuilder? = null
-    private var columns: Set<String> = emptySet()
+    private var columns: Collection<Column> = emptySet()
     private var sort: SelectBuilder.Sort? = null
     private var limit: SelectBuilder.Limit? = null
     private var distinct: Boolean = false
 
-    fun columns(columns: Set<String>) {
-        this.columns = columns
+    fun returns(columns: Set<String>) {
+        this.columns = columns.map { Column(it, mode) }
     }
 
-    fun columns(vararg columns: String) {
-        this.columns = columns.toSet()
+    fun returns(vararg columns: String) {
+        this.columns = columns.toSet().map { Column(it, mode) }
     }
 
     fun where(builderActions: DSLConditionBuilder.() -> Unit) {
-        val dslConditionBuilder = DSLConditionBuilder()
+        val dslConditionBuilder = DSLConditionBuilder(mode)
         dslConditionBuilder.builderActions()
 
         this.dslConditionBuilder = dslConditionBuilder
     }
 
     fun aggregation(vararg groupBy: String, builderActions: DSLAggregationBuilder.() -> Unit) {
-        val dslAggregationBuilder = DSLAggregationBuilder(groupBy.toSet())
+        val dslAggregationBuilder = DSLAggregationBuilder(groupBy.toSet(), mode)
         dslAggregationBuilder.builderActions()
         this.dslAggregationBuilder = dslAggregationBuilder
     }
 
     fun aggregation(builderActions: DSLAggregationBuilder.() -> Unit) {
-        val dslAggregationBuilder = DSLAggregationBuilder(emptySet())
+        val dslAggregationBuilder = DSLAggregationBuilder(emptySet(), mode)
         dslAggregationBuilder.builderActions()
         this.dslAggregationBuilder = dslAggregationBuilder
     }
@@ -153,12 +157,14 @@ class DSLSelectBuilder {
         limit = limit,
         sort = sort,
         distinct = distinct,
-        aggregation = dslAggregationBuilder?.createAggregation()
+        aggregation = dslAggregationBuilder?.createAggregation(),
+        mode = mode
     )
 }
 
 class DSLAggregationBuilder(
-    private val columns: Set<String>
+    private val columns: Set<String>,
+    private val mode: SqlMode
 ) {
     private val functions: MutableMap<String, SelectBuilder.AggregationFunction> = mutableMapOf()
 
@@ -174,13 +180,13 @@ class DSLAggregationBuilder(
     }
 
     private fun columnFunction(function: String, column: String, alias: String) {
-        functions[alias] = SelectBuilder.ColumnFunction(function, column)
+        functions[alias] = SelectBuilder.ColumnFunction(function, Column(column, mode))
     }
 
     internal fun createAggregation() = SelectBuilder.Aggregation(columns, functions)
 }
 
-class DSLConditionBuilder {
+class DSLConditionBuilder(private val mode: SqlMode) {
     private val columnConditions: MutableList<WherePart> = mutableListOf()
     private val subConditions: MutableList<DSLConditionBuilder> = mutableListOf()
 
@@ -189,27 +195,27 @@ class DSLConditionBuilder {
     }
 
     fun column(columnName: String, value: Any) {
-        columnConditions.add(Column(columnName, WhereOps.eq, value))
+        columnConditions.add(WhereColumn(Column(columnName, mode), WhereOps.eq, value))
     }
 
     fun column(columnName: String, value: Collection<Any>) {
-        columnConditions.add(Column(columnName, WhereOps.`in`, value))
+        columnConditions.add(WhereColumn(Column(columnName, mode), WhereOps.`in`, value))
     }
 
     fun column(columnName: String, op: WhereOps, value: Any) {
-        columnConditions.add(Column(columnName, op, value))
+        columnConditions.add(WhereColumn(Column(columnName, mode), op, value))
     }
 
     fun columnIsNull(columnName: String) {
-        columnConditions.add(ColumnIsNull(columnName))
+        columnConditions.add(WhereColumnIsNull(Column(columnName, mode)))
     }
 
     fun columnNotNull(columnName: String) {
-        columnConditions.add(ColumnIsNotNull(columnName))
+        columnConditions.add(WhereColumnIsNotNull(Column(columnName, mode)))
     }
 
     fun or(builderActions: DSLConditionBuilder.() -> Unit) {
-        val builder = DSLConditionBuilder()
+        val builder = DSLConditionBuilder(mode)
         builder.builderActions()
         subConditions.add(builder)
     }

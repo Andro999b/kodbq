@@ -1,5 +1,4 @@
 rootProject.name = "database-utils"
 include("database-utils-core")
-include("database-utils-pg")
-include("database-utils-quarkus-pg-reactive")
-include("database-utils-pg-fluent-jdbc")
+include("database-utils-quarkus-reactive")
+include("database-utils-fluent-jdbc")
