@@ -11,7 +11,7 @@ class UpdateBuilder(
         val params = this.columns.values
         val whereParams = mutableListOf<Any>()
 
-        var sql = "update ${mode.escape(tableName)} set ${columns.mapIndexed { i, c -> "\"$c\"=$${i + 1}" }.joinToString(",")}"
+        var sql = "update ${mode.escape(tableName)} set ${columns.mapIndexed { i, c -> "$c=${paramPlaceholder(i + 1)}" }.joinToString(",")}"
 
         where?.let {
             sql += " where ${buildWhere(it, whereParams, mode.escape, paramPlaceholder, params.size)}"
