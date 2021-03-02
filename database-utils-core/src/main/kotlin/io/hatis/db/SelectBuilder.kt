@@ -44,11 +44,14 @@ class SelectBuilder(
         }
 
         sort?.let {
-            sql.append(" sort on ${escape(it.column)} ${if(it.asc) "asc" else "desc" }")
+            sql.append(" order by ${escape(it.column)} ${if(it.asc) "asc" else "desc" }")
         }
 
         limit?.let {
-            sql.append(" limit ${it.offset}${if (it.count > 0) ", ${it.count}" else ""}")
+            sql.append(" offset ").append(it.offset)
+            if(it.count > 0) {
+                sql.append(" limit ").append(it.count)
+            }
         }
 
         return sql.toString() to params

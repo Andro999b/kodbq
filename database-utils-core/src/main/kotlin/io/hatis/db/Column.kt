@@ -5,11 +5,13 @@ data class Column(
     val mode: SqlMode,
     val table: String? = null
 ) {
+    private fun escapeName()  = if(name == "*") "*" else mode.escape(name)
+
     override fun toString(): String {
         if(table != null) {
-            return "${mode.escape(table)}.${mode.escape(name)}"
+            return "${mode.escape(table)}.${escapeName()}"
         } else {
-            return mode.escape(name)
+            return escapeName()
         }
     }
 }

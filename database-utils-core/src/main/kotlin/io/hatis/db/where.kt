@@ -46,8 +46,8 @@ internal fun buildWhere(
             is WhereColumn -> {
                 outParams.add(wherePart.params)
                 when (wherePart.op) {
-                    WhereOps.like -> "${wherePart.column} like %${paramPlaceholder(outParams.size + paramsIndexOffset)}%"
-                    WhereOps.`in` -> "${wherePart.column}  in (${paramPlaceholder(outParams.size + paramsIndexOffset)})"
+                    WhereOps.like -> "${wherePart.column} like ${paramPlaceholder(outParams.size + paramsIndexOffset)}"
+                    WhereOps.`in` -> "${wherePart.column} in (${paramPlaceholder(outParams.size + paramsIndexOffset)})"
                     else -> "${wherePart.column}  ${wherePart.op.op} ${paramPlaceholder(outParams.size + paramsIndexOffset)}"
                 }
             }
