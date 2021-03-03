@@ -21,7 +21,7 @@ class SelectBuilder(
     fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any>> {
         val escape = mode.escape
         val params = mutableListOf<Any>()
-        val sql = if(distinct) StringBuilder("distinct select ") else StringBuilder("select ")
+        val sql = if(distinct) StringBuilder("select distinct ") else StringBuilder("select ")
 
         if(columns.isNotEmpty()) {
             sql.append(columns.joinToString(",") { it.toString() })

@@ -104,6 +104,10 @@ class DSLSelectBuilder(private val mode: SqlMode) {
     private var limit: SelectBuilder.Limit? = null
     private var distinct: Boolean = false
 
+    fun distinct() {
+        distinct = true
+    }
+
     fun returns(columns: Set<String>) {
         this.columns = columns.map { Column(it, mode) }
     }

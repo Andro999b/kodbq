@@ -14,7 +14,7 @@ private fun update(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<Any?>
 
     return fluentJdbc.query()
         .update(sql)
-        .params(params)
+        .namedParams(toNamedParams(params))
 }
 
 private fun insert(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<List<Any?>>>): BatchQuery {
@@ -30,12 +30,17 @@ private fun select(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<Any?>
 
     return fluentJdbc.query()
         .select(sql)
-        .params(params)
+        .namedParams(toNamedParams(params))
 }
 
-private fun paramPlaceholder(index: Int) = "?"
+private fun toNamedParams(params: List<Any?>) = params
+    .mapIndexed { index, value -> "param${index + 1}" to value }
+    .toMap()
 
-fun UpdateBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
+private fun paramPlaceholder(index: Int) = "?"
+private fun paramPlaceholderNamed(index: Int) = ":param$index"
+
+fun UpdateBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
 fun InsertBuilder.build(fluentJdbc: FluentJdbc) = insert(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
-fun SelectBuilder.build(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
+fun SelectBuilder.build(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
 fun DeleteBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholder))

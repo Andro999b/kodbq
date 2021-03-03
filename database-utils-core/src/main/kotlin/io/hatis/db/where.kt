@@ -48,10 +48,10 @@ internal fun buildWhere(
                 when (wherePart.op) {
                     WhereOps.like -> "${wherePart.column} like ${paramPlaceholder(outParams.size + paramsIndexOffset)}"
                     WhereOps.`in` -> "${wherePart.column} in (${paramPlaceholder(outParams.size + paramsIndexOffset)})"
-                    else -> "${wherePart.column}  ${wherePart.op.op} ${paramPlaceholder(outParams.size + paramsIndexOffset)}"
+                    else -> "${wherePart.column} ${wherePart.op.op} ${paramPlaceholder(outParams.size + paramsIndexOffset)}"
                 }
             }
-            is WhereColumnIsNotNull -> "${wherePart.column}  is not null"
-            is WhereColumnIsNull -> "${wherePart.column}  is null"
+            is WhereColumnIsNotNull -> "${wherePart.column} is not null"
+            is WhereColumnIsNull -> "${wherePart.column} is null"
             else -> throw IllegalArgumentException("Unknown where part $wherePart")
         }
