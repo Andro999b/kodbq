@@ -12,18 +12,18 @@ enum class WhereOps(val op: String) {
 }
 
 interface WherePart
-interface Join: WherePart {
+interface WhereJoint: WherePart {
     val parts: Collection<WherePart>
     val separator: String
 }
 data class WhereColumn(val column: Column, val op: WhereOps, val params: Any): WherePart
 data class WhereColumnIsNull(val column: Column): WherePart
 data class WhereColumnIsNotNull(val column: Column): WherePart
-data class Or(override val parts: Collection<WherePart>): Join {
+data class Or(override val parts: Collection<WherePart>): WhereJoint {
     override val separator: String
         get() = " or "
 }
-data class And(override val parts: Collection<WherePart>): Join {
+data class And(override val parts: Collection<WherePart>): WhereJoint {
     override val separator: String
         get() = " and "
 }
@@ -35,7 +35,7 @@ internal fun buildWhere(
         paramsIndexOffset: Int = 0
 ): String =
         when (wherePart) {
-            is Join ->
+            is WhereJoint ->
                 if(wherePart.parts.size == 1) {
                     buildWhere(wherePart.parts.first(), outParams, escape,paramPlaceholder, paramsIndexOffset)
                 } else {
@@ -45,10 +45,12 @@ internal fun buildWhere(
                 }
             is WhereColumn -> {
                 outParams.add(wherePart.params)
+                val column = wherePart.column
+                val placeholder = paramPlaceholder(outParams.size + paramsIndexOffset)
                 when (wherePart.op) {
-                    WhereOps.like -> "${wherePart.column} like ${paramPlaceholder(outParams.size + paramsIndexOffset)}"
-                    WhereOps.`in` -> "${wherePart.column} in (${paramPlaceholder(outParams.size + paramsIndexOffset)})"
-                    else -> "${wherePart.column} ${wherePart.op.op} ${paramPlaceholder(outParams.size + paramsIndexOffset)}"
+                    WhereOps.like -> "$column like $placeholder"
+                    WhereOps.`in` -> "$column in ($placeholder)"
+                    else -> "$column ${wherePart.op.op} $placeholder"
                 }
             }
             is WhereColumnIsNotNull -> "${wherePart.column} is not null"

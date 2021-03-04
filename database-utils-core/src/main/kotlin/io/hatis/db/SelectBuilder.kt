@@ -3,6 +3,7 @@ package io.hatis.db
 class SelectBuilder(
     val tableName: String,
     val columns: Collection<Column>,
+    val joins: Collection<Join>,
     val where: WherePart?,
     val sort: Sort? = null,
     val limit: Limit? = null,
@@ -12,6 +13,9 @@ class SelectBuilder(
 ) {
     data class Sort(val column: String, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
+
+    enum class JoinMode(val sql: String) { `inner`(""), left("left"), right("right"), full("full"), }
+    data class Join(val joinTableColumn: Column, val onColumn: Column, val joinMode: JoinMode)
 
     interface AggregationFunction
     data class ColumnFunction(val function: String, val column: Column? = null): AggregationFunction
@@ -24,7 +28,7 @@ class SelectBuilder(
         val sql = if(distinct) StringBuilder("select distinct ") else StringBuilder("select ")
 
         if(columns.isNotEmpty()) {
-            sql.append(columns.joinToString(",") { it.toString() })
+            sql.append(columns.joinToString(",") { columnToReturnField(it) })
             getAggregationPart()?.let { sql.append(",").append(it) }
         } else {
             getAggregationPart()
@@ -33,6 +37,11 @@ class SelectBuilder(
         }
 
         sql.append(" from ${escape(tableName)}")
+
+        joins.forEach { (joinTableColumn, onColumn, joinMode) ->
+            if(joinMode.sql.isNotEmpty()) sql.append(" ").append(joinMode.sql)
+            sql.append(" join ${joinTableColumn.escapeTable()} on ${joinTableColumn}=${onColumn}")
+        }
 
         where?.let {
             sql.append(" where ").append(buildWhere(it, params, escape, paramPlaceholder))
@@ -56,6 +65,9 @@ class SelectBuilder(
 
         return sql.toString() to params
     }
+
+    private fun columnToReturnField(c: Column): CharSequence =
+        if (c.alias != null) "$c as ${c.alias}" else c.toString()
 
     private fun SelectBuilder.getAggregationPart() =
         aggregation?.let {
