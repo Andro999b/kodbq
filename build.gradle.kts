@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm") version "1.4.30"
     id("maven-publish")
-    id("com.jfrog.bintray") version "1.8.4"
+    id("com.jfrog.bintray") version "1.8.5"
 }
 
 repositories {
@@ -10,7 +10,7 @@ repositories {
 }
 
 
-val releaseVersion = "0.0.11"
+val releaseVersion = "0.0.12"
 version = releaseVersion
 
 subprojects {

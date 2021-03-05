@@ -41,6 +41,12 @@ private fun paramPlaceholder(index: Int) = "?"
 private fun paramPlaceholderNamed(index: Int) = ":$index"
 
 fun UpdateBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
+fun UpdateBuilder.execute(fluentJdbc: FluentJdbc) = build(fluentJdbc).run()
+
 fun InsertBuilder.build(fluentJdbc: FluentJdbc) = insert(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
+fun InsertBuilder.execute(fluentJdbc: FluentJdbc) = build(fluentJdbc).run()
+
 fun SelectBuilder.build(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
+
 fun DeleteBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
+fun DeleteBuilder.execute(fluentJdbc: FluentJdbc) = build(fluentJdbc).run()
