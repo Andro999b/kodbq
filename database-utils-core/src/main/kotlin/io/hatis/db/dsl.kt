@@ -169,7 +169,11 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun sort(columnName: String, asc: Boolean = true) {
-        this.sort = SelectBuilder.Sort(columnName, asc)
+        this.sort = SelectBuilder.Sort(Column(columnName, mode), asc)
+    }
+
+    fun sort(tableName: String, columnName: String, asc: Boolean = true) {
+        this.sort = SelectBuilder.Sort(Column(columnName, mode, tableName), asc)
     }
 
     fun limit(count: Int) {
