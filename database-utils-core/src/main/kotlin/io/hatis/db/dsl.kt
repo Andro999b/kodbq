@@ -151,19 +151,31 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun join(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
-        val builder = DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName)
-        builder.builderActions()
-        joins.add(builder.createJoin())
+        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.`INNER`, builderActions)
     }
 
-    fun aggregation(vararg groupBy: String, builderActions: DSLAggregationBuilder.() -> Unit) {
-        val dslAggregationBuilder = DSLAggregationBuilder(groupBy.toSet(), mode)
-        dslAggregationBuilder.builderActions()
-        this.dslAggregationBuilder = dslAggregationBuilder
+    fun leftJoin(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
+        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.LEFT, builderActions)
     }
+
+
+    fun rightJoin(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
+        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.RIGHT, builderActions)
+    }
+
+
+    fun fullJoin(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
+        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.FULL, builderActions)
+    }
+
+    private fun addJoin(builder: DSLJoinBuilder, joinMode: SelectBuilder.JoinMode,  builderActions:  DSLJoinBuilder.() -> Unit, ) {
+        builder.builderActions()
+        joins.add(builder.createJoin(joinMode))
+    }
+
 
     fun aggregation(builderActions: DSLAggregationBuilder.() -> Unit) {
-        val dslAggregationBuilder = DSLAggregationBuilder(emptySet(), mode)
+        val dslAggregationBuilder = DSLAggregationBuilder(mode)
         dslAggregationBuilder.builderActions()
         this.dslAggregationBuilder = dslAggregationBuilder
     }
@@ -204,12 +216,9 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     )
 }
 
-class DSLAggregationBuilder(
-    private val columns: Set<String>,
-    mode: SqlMode
-): DSLAggregationFunctionsBuilder(mode,null,  mutableMapOf()) {
+class DSLAggregationBuilder(mode: SqlMode): DSLAggregationFunctionsBuilder(mode) {
     fun table(tableName: String, builderActions: DSLAggregationFunctionsBuilder.() -> Unit) {
-        DSLAggregationFunctionsBuilder(mode, tableName, functions).builderActions()
+        DSLAggregationFunctionsBuilder(mode, tableName, functions, columns).builderActions()
     }
 
     internal fun createAggregation() = SelectBuilder.Aggregation(columns, functions)
@@ -217,9 +226,15 @@ class DSLAggregationBuilder(
 
 open class DSLAggregationFunctionsBuilder(
     protected val mode: SqlMode,
-    private val tableName: String?,
-    protected val functions: MutableMap<String, SelectBuilder.AggregationFunction>
+    private val tableName: String? = null,
+    protected val functions: MutableMap<String, SelectBuilder.AggregationFunction> = mutableMapOf(),
+    protected val columns: MutableSet<Column> = mutableSetOf()
 ) {
+    fun groupBy(vararg columnNames: String) {
+        columnNames.forEach {
+            columns.add(Column(it, mode, tableName))
+        }
+    }
     fun count(alias: String) = columnFunction("count", "*", alias)
     fun count(column: String, alias: String) = columnFunction("count", column, alias)
     fun max(column: String, alias: String) = columnFunction("max", column, alias)
@@ -238,11 +253,6 @@ open class DSLAggregationFunctionsBuilder(
 
 class DSLJoinBuilder(private val joinColumn: Column, private val onTable: String) {
     private lateinit var onColumn: Column
-    private var joinMode: SelectBuilder.JoinMode = SelectBuilder.JoinMode.inner
-
-    fun mode(joinMode: SelectBuilder.JoinMode) {
-        this.joinMode = joinMode
-    }
 
     fun on(columnName: String) {
         onColumn = Column(columnName, joinColumn.mode, onTable)
@@ -252,7 +262,7 @@ class DSLJoinBuilder(private val joinColumn: Column, private val onTable: String
         onColumn = Column(columnName, joinColumn.mode, tableName)
     }
 
-    internal fun createJoin() = SelectBuilder.Join(joinColumn, onColumn, joinMode)
+    internal fun createJoin(joinMode: SelectBuilder.JoinMode) = SelectBuilder.Join(joinColumn, onColumn, joinMode)
 }
 
 class DSLSelectConditionBuilder(private val tableName: String? = null, mode: SqlMode) : DSLHierarchyConditionBuilder(tableName, mode) {

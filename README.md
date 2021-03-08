@@ -2,6 +2,22 @@
 
 Toolkit project that utilize kotlin dsl functional to generate sql
 
+### Installation
+
+You can check out the latest version here:  
+https://bintray.com/andro999b/maven/database-utils-core
+
+```kotlin
+repositories {
+    jcenter()
+}
+dependencies {
+     implementation("io.hatis:database-utils-fluent-jdbc:${version}")
+    // or implementation("io.hatis:database-utils-quarkus-reactive:${version}")
+}
+```
+
+
 #### SQL Lib integrations
 [fluent-jdbc](https://github.com/zsoltherpai/fluent-jdbc)  
 [quarkus-reactive](https://github.com/zsoltherpai/fluent-jdbc)
@@ -46,7 +62,12 @@ sqlSelect("table_name") {
     returns("name")
 }
 ```
-
+#### Distinct Select
+```kotlin
+sqlSelect("table_name") {
+    distinct()
+}
+```
 #### Where cause
 ```kotlin
 sqlSelect("table_name") {
@@ -116,7 +137,8 @@ sqlSelect("table_name") {
 #### GroupBy
 ```kotlin
 sqlSelect("table_name") {
-    aggregation("by_column") {
+    aggregation {
+        groupBy("by_column")
         count("count")
     }
 }
@@ -125,7 +147,7 @@ sqlSelect("table_name") {
 ```kotlin
 sqlSelect("table_name") {
     join("second_table", "second_table_column") { on("root_table_column") }
-    join("third_table", "third_table_column") { on("second_table", "second_table_column_2") }
+    leftJoin("third_table", "third_table_column") { on("second_table", "second_table_column_2") }
     where {
         table("second_table") {
             // where syntax
@@ -134,6 +156,7 @@ sqlSelect("table_name") {
     sort("second_table", "second_table_sort_column")
     aggregation {
         table("second_table") {
+            groupBy("by_column")
             sum("second_table_num_column", "sum")
         }
     }

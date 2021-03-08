@@ -14,13 +14,13 @@ class SelectBuilder(
     data class Sort(val column: Column, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
 
-    enum class JoinMode(val sql: String) { `inner`(""), left("left"), right("right"), full("full"), }
+    enum class JoinMode(val sql: String) { INNER(""), LEFT("left"), RIGHT("right"), FULL("full"), }
     data class Join(val joinTableColumn: Column, val onColumn: Column, val joinMode: JoinMode)
 
     interface AggregationFunction
     data class ColumnFunction(val function: String, val column: Column? = null): AggregationFunction
     data class DBFunction(val function: String): AggregationFunction
-    data class Aggregation(val groupBy: Collection<String>, val functions: Map<String, AggregationFunction>)
+    data class Aggregation(val groupBy: Collection<Column>, val functions: Map<String, AggregationFunction>)
 
     fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any>> {
         val escape = mode.escape
@@ -49,7 +49,7 @@ class SelectBuilder(
 
         aggregation?.let { (groupBy, _) ->
             if(groupBy.isNotEmpty())
-                sql.append(" group by ").append(groupBy.joinToString(",", transform = escape))
+                sql.append(" group by ").append(groupBy.joinToString(","))
         }
 
         sort?.let {
@@ -69,7 +69,7 @@ class SelectBuilder(
     private fun columnToReturnField(c: Column): CharSequence =
         if (c.alias != null) "$c as ${c.alias}" else c.toString()
 
-    private fun SelectBuilder.getAggregationPart() =
+    private fun getAggregationPart() =
         aggregation?.let {
             it.functions.entries.map { (alias, f) ->
                 when (f) {
