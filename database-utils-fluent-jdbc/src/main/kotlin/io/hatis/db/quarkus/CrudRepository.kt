@@ -11,11 +11,12 @@ abstract class CrudRepository<T> {
     protected abstract val fluentJdbc: FluentJdbc
     protected abstract val tableName: String
 
-    open fun insert(actions: DSLMutationColumnsBuilder.() -> Unit) =
+    open fun insert(actions: DSLMutationColumnsBuilder.() -> Unit) {
         sqlInsert(tableName) {
             values { actions() }
         }
             .execute(fluentJdbc)
+    }
 
     open fun insertAll(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) {
         sqlInsert(tableName) {
