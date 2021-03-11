@@ -151,7 +151,7 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun join(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
-        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.`INNER`, builderActions)
+        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.INNER, builderActions)
     }
 
     fun leftJoin(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {

@@ -44,7 +44,9 @@ class SelectBuilder(
         }
 
         where?.let {
-            sql.append(" where ").append(buildWhere(it, params, escape, paramPlaceholder))
+            val where = buildWhere(it, params, escape, paramPlaceholder)
+            if(where.isNotEmpty())
+                sql.append(" where ").append(where)
         }
 
         aggregation?.let { (groupBy, _) ->

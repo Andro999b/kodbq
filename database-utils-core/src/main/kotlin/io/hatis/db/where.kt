@@ -36,12 +36,14 @@ internal fun buildWhere(
 ): String =
         when (wherePart) {
             is WhereJoint ->
-                if(wherePart.parts.size == 1) {
-                    buildWhere(wherePart.parts.first(), outParams, escape,paramPlaceholder, paramsIndexOffset)
-                } else {
-                    "(" + wherePart.parts.joinToString(wherePart.separator) {
-                        buildWhere(it, outParams, escape, paramPlaceholder, paramsIndexOffset)
-                    } + ")"
+                when {
+                    wherePart.parts.size == 1 ->
+                        buildWhere(wherePart.parts.first(), outParams, escape,paramPlaceholder, paramsIndexOffset)
+                    wherePart.parts.size > 1 ->
+                        "(" + wherePart.parts.joinToString(wherePart.separator) {
+                            buildWhere(it, outParams, escape, paramPlaceholder, paramsIndexOffset)
+                        } + ")"
+                    else -> ""
                 }
             is WhereColumn -> {
                 outParams.add(wherePart.params)
