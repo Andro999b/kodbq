@@ -61,7 +61,10 @@ abstract class CrudRepository<T> {
             .listResult(mapper)
 
     open fun selectOne(actions: DSLSelectConditionBuilder.() -> Unit): Optional<T> =
-        sqlSelect(tableName) { where { actions() } }
+        sqlSelect(tableName) {
+            where { actions() }
+            limit(1)
+        }
             .build(fluentJdbc)
             .firstResult(mapper)
 
@@ -69,4 +72,12 @@ abstract class CrudRepository<T> {
         sqlSelect(tableName) { where { id(id) } }
             .build(fluentJdbc)
             .firstResult(mapper)
+
+    open fun selectById(ids: Collection<Long>): Collection<T> =
+        if (ids.isEmpty())
+            emptyList()
+        else
+            sqlSelect(tableName) { where { column("id", ids) } }
+                .build(fluentJdbc)
+                .listResult(mapper)
 }
