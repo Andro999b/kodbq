@@ -6,15 +6,28 @@ class UpdateBuilder(
     val where: WherePart?,
     val mode: SqlMode = SqlMode.PG
 ) {
-    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
-        val columns = this.columns.keys
-        val params = this.columns.values
-        val whereParams = mutableListOf<Any>()
+    private fun buildParams(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String) =
+        columns.entries.joinToString(",") { (key, value) ->
+            if(value is SqlGenerator.GeneratedPart) {
+                val actions = value.actions
+                val generator = SqlGenerator(
+                    outParams = outParams,
+                    paramPlaceholder = paramPlaceholder,
+                    column = key
+                )
+                generator.actions()
+                generator.generatedSql
+            } else {
+                outParams.add(value)
+                "$key=${paramPlaceholder(outParams.size)}"
+            }
+        }
 
-        var sql = "update ${mode.escape(tableName)} set " +
-                columns
-                    .mapIndexed { i, c -> "$c=${paramPlaceholder(i + 1)}" }
-                    .joinToString(",")
+    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
+        val params = mutableListOf<Any?>()
+        val whereParams = mutableListOf<Any?>()
+
+        var sql = "update ${mode.escape(tableName)} set " + buildParams(params, paramPlaceholder)
 
         where?.let {
             sql += " where ${buildWhere(it, whereParams, mode.escape, paramPlaceholder, params.size)}"

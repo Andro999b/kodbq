@@ -10,7 +10,7 @@ repositories {
 }
 
 
-val releaseVersion = "0.0.19"
+val releaseVersion = "0.0.20"
 version = releaseVersion
 
 subprojects {

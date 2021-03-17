@@ -17,6 +17,7 @@ interface WhereJoint: WherePart {
     val separator: String
 }
 data class WhereColumn(val column: Column, val op: WhereOps, val params: Any): WherePart
+data class WhereGeneratedSql(val column: Column, val actions: SqlGenerator.() -> Unit): WherePart
 data class WhereColumnIsNull(val column: Column): WherePart
 data class WhereColumnIsNotNull(val column: Column): WherePart
 data class Or(override val parts: Collection<WherePart>): WhereJoint {
@@ -29,7 +30,7 @@ data class And(override val parts: Collection<WherePart>): WhereJoint {
 }
 internal fun buildWhere(
         wherePart: WherePart,
-        outParams: MutableList<Any>,
+        outParams: MutableList<Any?>,
         escape: (String) -> String,
         paramPlaceholder: (Int) -> String,
         paramsIndexOffset: Int = 0
@@ -57,5 +58,17 @@ internal fun buildWhere(
             }
             is WhereColumnIsNotNull -> "${wherePart.column} is not null"
             is WhereColumnIsNull -> "${wherePart.column} is null"
+            is WhereGeneratedSql -> {
+                val actions = wherePart.actions
+                val generator = SqlGenerator(
+                    paramsIndexOffset,
+                    outParams,
+                    paramPlaceholder,
+                    wherePart.column
+                )
+
+                generator.actions()
+                generator.generatedSql
+            }
             else -> throw IllegalArgumentException("Unknown where part $wherePart")
         }

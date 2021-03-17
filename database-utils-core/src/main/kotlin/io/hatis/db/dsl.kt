@@ -1,24 +1,42 @@
 package io.hatis.db
 
-fun sqlInsert(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLInsertBuilder.() -> Unit): InsertBuilder {
+import java.lang.IllegalStateException
+
+fun sqlInsert(
+    tableName: String,
+    mode: SqlMode = SqlMode.PG,
+    builderActions: DSLInsertBuilder.() -> Unit
+): InsertBuilder {
     val dslInsertBuilder = DSLInsertBuilder(tableName, mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createInsertBuilder()
 }
 
-fun sqlUpdate(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLUpdateBuilder.() -> Unit): UpdateBuilder {
+fun sqlUpdate(
+    tableName: String,
+    mode: SqlMode = SqlMode.PG,
+    builderActions: DSLUpdateBuilder.() -> Unit
+): UpdateBuilder {
     val dslInsertBuilder = DSLUpdateBuilder(mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createUpdateBuilder(tableName)
 }
 
-fun sqlSelect(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLSelectBuilder.() -> Unit): SelectBuilder {
+fun sqlSelect(
+    tableName: String,
+    mode: SqlMode = SqlMode.PG,
+    builderActions: DSLSelectBuilder.() -> Unit
+): SelectBuilder {
     val dslInsertBuilder = DSLSelectBuilder(tableName, mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createSelectBuilder()
 }
 
-fun sqlDelete(tableName: String, mode: SqlMode = SqlMode.PG, builderActions: DSLDeleteBuilder.() -> Unit): DeleteBuilder {
+fun sqlDelete(
+    tableName: String,
+    mode: SqlMode = SqlMode.PG,
+    builderActions: DSLDeleteBuilder.() -> Unit
+): DeleteBuilder {
     val dslInsertBuilder = DSLDeleteBuilder(tableName, mode)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createDeleteBuilder()
@@ -55,6 +73,10 @@ class DSLMutationColumnsBuilder(private val mode: SqlMode) {
 
     fun column(columnName: String, value: Any?) {
         columns[Column(columnName, mode)] = value
+    }
+
+    fun generate(columnName: String, actions: SqlGenerator.() -> Unit) {
+        column(columnName, SqlGenerator.GeneratedPart(actions))
     }
 }
 
@@ -150,25 +172,45 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
         this.dslConditionBuilder = dslConditionBuilder
     }
 
-    fun join(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
-        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.INNER, builderActions)
+    fun join(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
+        addJoin(
+            DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName),
+            SelectBuilder.JoinMode.INNER,
+            builderActions
+        )
     }
 
-    fun leftJoin(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
-        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.LEFT, builderActions)
+    fun leftJoin(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
+        addJoin(
+            DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName),
+            SelectBuilder.JoinMode.LEFT,
+            builderActions
+        )
     }
 
 
-    fun rightJoin(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
-        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.RIGHT, builderActions)
+    fun rightJoin(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
+        addJoin(
+            DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName),
+            SelectBuilder.JoinMode.RIGHT,
+            builderActions
+        )
     }
 
 
-    fun fullJoin(joinTable: String, joinColumn: String, builderActions:  DSLJoinBuilder.() -> Unit) {
-        addJoin(DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName), SelectBuilder.JoinMode.FULL, builderActions)
+    fun fullJoin(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
+        addJoin(
+            DSLJoinBuilder(Column(joinColumn, mode, joinTable), tableName),
+            SelectBuilder.JoinMode.FULL,
+            builderActions
+        )
     }
 
-    private fun addJoin(builder: DSLJoinBuilder, joinMode: SelectBuilder.JoinMode,  builderActions:  DSLJoinBuilder.() -> Unit, ) {
+    private fun addJoin(
+        builder: DSLJoinBuilder,
+        joinMode: SelectBuilder.JoinMode,
+        builderActions: DSLJoinBuilder.() -> Unit,
+    ) {
         builder.builderActions()
         joins.add(builder.createJoin(joinMode))
     }
@@ -197,7 +239,7 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun range(from: Int, to: Int) {
-        if(to < from) {
+        if (to < from) {
             throw IllegalArgumentException("to < offset")
         }
         this.limit = SelectBuilder.Limit(from, to - from)
@@ -216,7 +258,7 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     )
 }
 
-class DSLAggregationBuilder(mode: SqlMode): DSLAggregationFunctionsBuilder(mode) {
+class DSLAggregationBuilder(mode: SqlMode) : DSLAggregationFunctionsBuilder(mode) {
     fun table(tableName: String, builderActions: DSLAggregationFunctionsBuilder.() -> Unit) {
         DSLAggregationFunctionsBuilder(mode, tableName, functions, columns).builderActions()
     }
@@ -235,6 +277,7 @@ open class DSLAggregationFunctionsBuilder(
             columns.add(Column(it, mode, tableName))
         }
     }
+
     fun count(alias: String) = columnFunction("count", "*", alias)
     fun count(column: String, alias: String) = columnFunction("count", column, alias)
     fun max(column: String, alias: String) = columnFunction("max", column, alias)
@@ -265,7 +308,8 @@ class DSLJoinBuilder(private val joinColumn: Column, private val onTable: String
     internal fun createJoin(joinMode: SelectBuilder.JoinMode) = SelectBuilder.Join(joinColumn, onColumn, joinMode)
 }
 
-class DSLSelectConditionBuilder(private val tableName: String? = null, mode: SqlMode) : DSLHierarchyConditionBuilder(tableName, mode) {
+class DSLSelectConditionBuilder(private val tableName: String? = null, mode: SqlMode) :
+    DSLHierarchyConditionBuilder(tableName, mode) {
     fun table(tableName: String, builderActions: DSLConditionBuilder.() -> Unit) {
         DSLConditionBuilder(tableName, columnConditions, mode).builderActions()
     }
@@ -285,7 +329,8 @@ class DSLUpdateConditionBuilder(mode: SqlMode) : DSLHierarchyConditionBuilder(nu
     }
 }
 
-open class DSLHierarchyConditionBuilder(tableName: String? = null, mode: SqlMode) : DSLConditionBuilder(tableName, mutableListOf(), mode) {
+open class DSLHierarchyConditionBuilder(tableName: String? = null, mode: SqlMode) :
+    DSLConditionBuilder(tableName, mutableListOf(), mode) {
     protected val subConditions: MutableList<DSLHierarchyConditionBuilder> = mutableListOf()
 
     private fun isNotEmpty() = columnConditions.isNotEmpty()
@@ -295,7 +340,7 @@ open class DSLHierarchyConditionBuilder(tableName: String? = null, mode: SqlMode
             .plus(subConditions)
             .filter { it.isNotEmpty() }
 
-        if(conditions.size == 1)
+        if (conditions.size == 1)
             return generateWhere(conditions.first())
 
         return Or(conditions.map { generateWhere(it) })
@@ -345,4 +390,42 @@ open class DSLConditionBuilder(
     fun columnNotNull(columnName: String) {
         columnConditions.add(WhereColumnIsNotNull(Column(columnName, mode, tableName)))
     }
+
+    fun generate(columnName: String, actions: SqlGenerator.() -> Unit) {
+        columnConditions.add(WhereGeneratedSql(Column(columnName, mode, tableName), actions))
+    }
+}
+
+class SqlGenerator(
+    private var paramOffser: Int = 0,
+    private val outParams: MutableList<Any?>,
+    private val paramPlaceholder: (Int) -> String,
+    private val column: Column
+) {
+    lateinit var generatedSql: String
+
+    fun column() = column
+
+    fun value(v: Any): String {
+        outParams.add(v)
+        return paramPlaceholder(outParams.size + paramOffser)
+    }
+
+    fun sql(s: String) {
+        generatedSql = s
+    }
+
+    data class GeneratedPart(val actions: SqlGenerator.() -> Unit)
+}
+
+fun main() {
+    val out = sqlSelect("test") {
+        where {
+            generate("test") {
+                sql("${column()} < ${value(1)}")
+            }
+        }
+    }.buildSqlAndParams { "?" }
+
+    println(out)
 }

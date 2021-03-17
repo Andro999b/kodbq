@@ -22,9 +22,9 @@ class SelectBuilder(
     data class DBFunction(val function: String): AggregationFunction
     data class Aggregation(val groupBy: Collection<Column>, val functions: Map<String, AggregationFunction>)
 
-    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any>> {
+    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
         val escape = mode.escape
-        val params = mutableListOf<Any>()
+        val params = mutableListOf<Any?>()
         val sql = if(distinct) StringBuilder("select distinct ") else StringBuilder("select ")
 
         if(columns.isNotEmpty()) {

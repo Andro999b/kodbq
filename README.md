@@ -162,3 +162,37 @@ sqlSelect("table_name") {
     }
 }
 ```
+
+#### Sql Insertion
+You can insert some custom sql construction you SqlGenerator syntax:  
+```kotlin
+sqlInsert("test") {
+    values {
+        generate("column1") {
+            sql("${column()} = ${value(1)}")
+        }
+        generate("column2") {
+            sql("current_timestamp")
+        }
+    }
+}
+
+sqlUpdate("test") {
+    set {
+        generate("column1") {
+            sql("${column()} = ${value(1)}")
+        }
+        generate("column2") {
+            sql("current_timestamp")
+        }
+    }
+}
+
+sqlSelect("test") {
+    where {
+        generate("column") {
+            sql("${column()} = ${value(1)}")
+        }
+    }
+}
+```
