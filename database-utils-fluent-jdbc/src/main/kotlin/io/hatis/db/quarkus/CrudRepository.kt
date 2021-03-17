@@ -55,12 +55,25 @@ abstract class CrudRepository<T> {
             .build(fluentJdbc)
             .singleResult(Mappers.singleLong()) > 0
 
-    open fun select(actions: DSLSelectConditionBuilder.() -> Unit): Collection<T> =
+    open fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> =
+        sqlSelect(tableName) { actions() }
+            .build(fluentJdbc)
+            .listResult(mapper)
+
+    open fun selectOne(actions: DSLSelectBuilder.() -> Unit): Optional<T> =
+        sqlSelect(tableName) {
+            actions()
+            limit(1)
+        }
+            .build(fluentJdbc)
+            .firstResult(mapper)
+
+    open fun selectWhere(actions: DSLSelectConditionBuilder.() -> Unit): Collection<T> =
         sqlSelect(tableName) { where { actions() } }
             .build(fluentJdbc)
             .listResult(mapper)
 
-    open fun selectOne(actions: DSLSelectConditionBuilder.() -> Unit): Optional<T> =
+    open fun selectOneWhere(actions: DSLSelectConditionBuilder.() -> Unit): Optional<T> =
         sqlSelect(tableName) {
             where { actions() }
             limit(1)
