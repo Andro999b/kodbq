@@ -196,3 +196,44 @@ sqlSelect("test") {
     }
 }
 ```
+
+### Fluent JDBC support
+
+Yo can use fluent jdbc lib for execute and map results
+
+```kotlin
+dependencies {
+    implementation("io.hatis:database-utils-fluent-jdbc:${version}")
+}
+```
+
+Examples:  
+```kotlin
+sqlSelect("test") {
+    // query
+}
+    .build(fluentJdbc)
+    .firstResult()
+
+
+insertSelect("test") {
+    // query
+}
+    .execute(fluentJdbc)
+```
+
+#### CrudRepository
+You can extend abstract class `CrudRepository` to avoid write some common code:  
+
+```kotlin
+class MyPojoRepository(override val fluentJdbc: FluentJdbc): CrudRepository() {
+    override val tableName: String = "pojo_table"
+    override val mapper = { rs: ResultSet -> Pojo(/* init fields*/)}
+    
+    fun getById(id: Long) = selectById(id)
+    fun getByField(field: String) = selectOneWhere { column("field", field) }
+    fun create(obj: Pojo) = insertAndGetId { column("field", pojo.field) }
+    
+    //...
+}
+```

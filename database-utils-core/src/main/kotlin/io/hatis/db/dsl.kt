@@ -1,7 +1,5 @@
 package io.hatis.db
 
-import java.lang.IllegalStateException
-
 fun sqlInsert(
     tableName: String,
     mode: SqlMode = SqlMode.PG,
@@ -397,7 +395,7 @@ open class DSLConditionBuilder(
 }
 
 class SqlGenerator(
-    private var paramOffser: Int = 0,
+    private var paramOffset: Int = 0,
     private val outParams: MutableList<Any?>,
     private val paramPlaceholder: (Int) -> String,
     private val column: Column
@@ -408,7 +406,7 @@ class SqlGenerator(
 
     fun value(v: Any): String {
         outParams.add(v)
-        return paramPlaceholder(outParams.size + paramOffser)
+        return paramPlaceholder(outParams.size + paramOffset)
     }
 
     fun sql(s: String) {
@@ -416,16 +414,4 @@ class SqlGenerator(
     }
 
     data class GeneratedPart(val actions: SqlGenerator.() -> Unit)
-}
-
-fun main() {
-    val out = sqlSelect("test") {
-        where {
-            generate("test") {
-                sql("${column()} < ${value(1)}")
-            }
-        }
-    }.buildSqlAndParams { "?" }
-
-    println(out)
 }
