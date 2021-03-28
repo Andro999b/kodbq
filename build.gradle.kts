@@ -1,22 +1,19 @@
 plugins {
     kotlin("jvm") version "1.4.30"
     id("maven-publish")
-    id("com.jfrog.bintray") version "1.8.5"
 }
 
 repositories {
-    jcenter()
     mavenCentral()
 }
 
 
-val releaseVersion = "0.0.20"
+val releaseVersion = "0.0.21"
 version = releaseVersion
 
 subprojects {
     apply { plugin("kotlin") }
     apply { plugin("maven-publish") }
-    apply { plugin("com.jfrog.bintray") }
 
     group = "io.hatis"
     version = releaseVersion
@@ -37,29 +34,19 @@ subprojects {
     }
 
     publishing {
-        publications {
-            create<MavenPublication>("bintray") {
-                from(components["java"])
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/Andro999b/kotlin-database-utils")
+                credentials {
+                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITPKG_USER")
+                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITPKG_TOKEN")
+                }
             }
         }
-    }
-
-    bintray {
-        user = project.findProperty("bintray.user") as String? ?: System.getenv("BINTRAY_USER")
-        key = project.findProperty("bintray.key") as String? ?: System.getenv("BINTRAY_KEy")
-        publish = true
-
-        setPublications("bintray")
-
-        pkg.apply {
-            repo = "maven"
-            githubRepo = "Andro999b/kotlin-database-utils"
-            vcsUrl = "https://github.com/Andro999b/kotlin-database-utils"
-            name = project.name
-            setLicenses("MIT")
-
-            version.apply {
-                name = project.version.toString()
+        publications {
+            register<MavenPublication>("gpr") {
+                from(components["java"])
             }
         }
     }
@@ -68,14 +55,5 @@ subprojects {
         implementation("org.jetbrains.kotlin:kotlin-stdlib")
     }
 }
-
-tasks.bintrayPublish {
-    enabled = false
-}
-
-tasks.bintrayUpload {
-    enabled = false
-}
-
 
 
