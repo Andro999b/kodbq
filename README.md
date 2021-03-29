@@ -1,3 +1,5 @@
+[![](https://jitpack.io/v/Andro999b/kotlin-database-utils.svg)](https://jitpack.io/#Andro999b/kotlin-database-utils)
+
 ### Kotlin DSL Sql Builder
 
 Toolkit project that utilize kotlin dsl functional to generate sql
@@ -9,11 +11,12 @@ https://bintray.com/andro999b/maven/database-utils-core
 
 ```kotlin
 repositories {
-    jcenter()
+    maven { url = uri("https://jitpack.io") }
 }
 dependencies {
-     implementation("io.hatis:database-utils-fluent-jdbc:${version}")
-    // or implementation("io.hatis:database-utils-quarkus-reactive:${version}")
+    implementation("com.github.Andro999b.kotlin-database-utils:database-utils-fluent-jdbc:${version}")
+    // or implementation("com.github.Andro999b.kotlin-database-utils:database-utils-quarkus-reactive:${version}")
+    // or implementation("com.github.Andro999b.kotlin-database-utils:database-utils-quarkus-coroutines:${version}")
 }
 ```
 
