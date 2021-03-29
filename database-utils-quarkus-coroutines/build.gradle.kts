@@ -7,3 +7,7 @@ dependencies {
 
     api(project(":database-utils-quarkus-reactive"))
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.ExperimentalCoroutinesApi"
+}

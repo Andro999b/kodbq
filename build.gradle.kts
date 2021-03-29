@@ -7,15 +7,14 @@ repositories {
     mavenCentral()
 }
 
-
-val releaseVersion = "0.0.21"
+val releaseVersion = "0.0.22"
 version = releaseVersion
 
 subprojects {
     apply { plugin("kotlin") }
     apply { plugin("maven-publish") }
 
-    group = "io.hatis"
+    group = "com.github.Andro999b.kotlin-database-utils"
     version = releaseVersion
 
     repositories {
@@ -34,16 +33,16 @@ subprojects {
     }
 
     publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/Andro999b/kotlin-database-utils")
-                credentials {
-                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITPKG_USER")
-                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITPKG_TOKEN")
-                }
-            }
-        }
+//        repositories {
+//            maven {
+//                name = "GitHubPackages"
+//                url = uri("https://maven.pkg.github.com/Andro999b/kotlin-database-utils")
+//                credentials {
+//                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITPKG_USER")
+//                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITPKG_TOKEN")
+//                }
+//            }
+//        }
         publications {
             register<MavenPublication>("gpr") {
                 from(components["java"])

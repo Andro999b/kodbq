@@ -16,7 +16,9 @@ interface WhereJoint: WherePart {
     val parts: Collection<WherePart>
     val separator: String
 }
-data class WhereColumn(val column: Column, val op: WhereOps, val params: Any): WherePart
+data class WhereColumn(val column: Column, val op: WhereOps, val params: Any): WherePart {
+    val mode get() = column.mode
+}
 data class WhereGeneratedSql(val column: Column, val actions: SqlGenerator.() -> Unit): WherePart
 data class WhereColumnIsNull(val column: Column): WherePart
 data class WhereColumnIsNotNull(val column: Column): WherePart
@@ -47,13 +49,22 @@ internal fun buildWhere(
                     else -> ""
                 }
             is WhereColumn -> {
-                outParams.add(wherePart.params)
-                val column = wherePart.column
-                val placeholder = paramPlaceholder(outParams.size + paramsIndexOffset)
                 when (wherePart.op) {
-                    WhereOps.like -> "$column like $placeholder"
-                    WhereOps.`in` -> "$column in ($placeholder)"
-                    else -> "$column ${wherePart.op.op} $placeholder"
+                    WhereOps.`in`-> { // expand in params
+                        val params =  wherePart.params as Collection<*>
+                        "${wherePart.column} in (${
+                            params.joinToString(",") {
+                                outParams.add(it)
+                                paramPlaceholder(outParams.size + paramsIndexOffset)
+                            }
+                        })"
+                    }
+                    else -> {
+                        outParams.add(wherePart.params)
+                        val column = wherePart.column
+                        val placeholder = paramPlaceholder(outParams.size + paramsIndexOffset)
+                        "$column ${wherePart.op.op} $placeholder"
+                    }
                 }
             }
             is WhereColumnIsNotNull -> "${wherePart.column} is not null"
