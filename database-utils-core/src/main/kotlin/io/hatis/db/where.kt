@@ -72,6 +72,7 @@ internal fun buildWhere(
             is WhereGeneratedSql -> {
                 val actions = wherePart.actions
                 val generator = SqlGenerator(
+                    SqlGenerator.Usage.where,
                     paramsIndexOffset,
                     outParams,
                     paramPlaceholder,

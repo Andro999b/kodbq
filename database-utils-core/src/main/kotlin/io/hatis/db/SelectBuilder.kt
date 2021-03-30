@@ -73,7 +73,7 @@ class SelectBuilder(
 
     private fun getAggregationPart() =
         aggregation?.let {
-            it.functions.entries.map { (alias, f) ->
+            it.functions.entries.mapNotNull { (alias, f) ->
                 when (f) {
                     is ColumnFunction ->
                         "${f.function}(${f.column ?: "*"}) as ${mode.escape(alias)}"
@@ -82,7 +82,6 @@ class SelectBuilder(
                     else -> null
                 }
             }
-                .filterNotNull()
                 .joinToString(",")
         }
 }

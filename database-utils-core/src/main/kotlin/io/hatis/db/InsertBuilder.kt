@@ -11,6 +11,7 @@ class InsertBuilder(
             if(value is SqlGenerator.GeneratedPart) {
                 val actions = value.actions
                 val generator = SqlGenerator(
+                    usage = SqlGenerator.Usage.insert,
                     outParams = outParams,
                     paramPlaceholder = paramPlaceholder,
                     column = key
@@ -28,6 +29,7 @@ class InsertBuilder(
             if(value is SqlGenerator.GeneratedPart) {
                 val actions = value.actions
                 val generator = SqlGenerator(
+                    usage = SqlGenerator.Usage.insert,
                     outParams = outParams,
                     paramPlaceholder = paramPlaceholder,
                     column = key

@@ -11,6 +11,7 @@ class UpdateBuilder(
             if(value is SqlGenerator.GeneratedPart) {
                 val actions = value.actions
                 val generator = SqlGenerator(
+                    usage = SqlGenerator.Usage.update,
                     outParams = outParams,
                     paramPlaceholder = paramPlaceholder,
                     column = key
