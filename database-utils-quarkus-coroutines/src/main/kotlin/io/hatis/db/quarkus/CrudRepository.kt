@@ -53,13 +53,13 @@ abstract class CrudRepository<T> {
             where { actions() }
         }
             .await(tx)
-            .first().getBoolean("count")
+            .first()
+            .getBoolean("count")
     }
 
     open suspend fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
         sqlSelect(tableName) { actions() }
-            .await(tx)
-            .map(mapper)
+            .awaitAll(tx, mapper)
     }
 
     open suspend fun selectOne(actions: DSLSelectBuilder.() -> Unit): T? = inTransaction { tx ->
@@ -67,15 +67,12 @@ abstract class CrudRepository<T> {
             actions()
             limit(1)
         }
-            .await(tx)
-            .firstOrNull()
-            ?.let(mapper)
+            .awaitFirst(tx, mapper)
     }
 
     open suspend fun selectWhere(actions: DSLSelectConditionBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
         sqlSelect(tableName) { where { actions() } }
-            .await(tx)
-            .map(mapper)
+            .awaitAll(tx, mapper)
     }
 
     open suspend fun selectOneWhere(actions: DSLSelectConditionBuilder.() -> Unit): T? = inTransaction { tx ->
@@ -83,16 +80,12 @@ abstract class CrudRepository<T> {
             where { actions() }
             limit(1)
         }
-            .await(tx)
-            .firstOrNull()
-            ?.let(mapper)
+            .awaitFirst(tx, mapper)
     }
 
     open suspend fun selectById(id: Long): T? = inTransaction { tx ->
         sqlSelect(tableName) { where { id(id) } }
-            .await(tx)
-            .firstOrNull()
-            ?.let(mapper)
+            .awaitFirst(tx, mapper)
     }
 
     open suspend fun selectById(ids: Collection<Long>): Collection<T> =
@@ -101,7 +94,6 @@ abstract class CrudRepository<T> {
         else
             inTransaction { tx ->
                 sqlSelect(tableName) { where { column("id", ids) } }
-                    .await(tx)
-                    .map(mapper)
+                    .awaitAll(tx, mapper)
             }
 }
