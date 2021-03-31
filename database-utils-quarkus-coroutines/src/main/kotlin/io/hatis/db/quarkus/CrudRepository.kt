@@ -54,7 +54,7 @@ abstract class CrudRepository<T> {
         }
             .await(tx)
             .first()
-            .getBoolean("count")
+            .getInteger("count") > 0
     }
 
     open suspend fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
