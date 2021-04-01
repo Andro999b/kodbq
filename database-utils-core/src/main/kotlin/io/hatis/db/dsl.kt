@@ -73,6 +73,16 @@ class DSLMutationColumnsBuilder(private val mode: SqlMode) {
         columns[Column(columnName, mode)] = value
     }
 
+    fun columnNotNull(columnName: String, value: Any?) {
+        value?.let {
+            columns[Column(columnName, mode)] = it
+        }
+    }
+
+    fun column(columnName: Enum<*>, value: Any?) {
+        columns[Column(columnName.name, mode)] = value
+    }
+
     fun generate(columnName: String, actions: SqlGenerator.() -> Unit) {
         column(columnName, SqlGenerator.GeneratedPart(actions))
     }
