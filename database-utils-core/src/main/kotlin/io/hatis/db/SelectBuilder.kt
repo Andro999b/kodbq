@@ -11,7 +11,7 @@ class SelectBuilder(
     val aggregation: Aggregation? = null,
     val mode: SqlMode = SqlMode.PG
 ) {
-    data class Sort(val column: Column, val asc: Boolean = true)
+    data class Sort(val column: Collection<Column>, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
 
     enum class JoinMode(val sql: String) { INNER(""), LEFT("left"), RIGHT("right"), FULL("full"), }
@@ -55,7 +55,7 @@ class SelectBuilder(
         }
 
         sort?.let {
-            sql.append(" order by ${it.column} ${if(it.asc) "asc" else "desc" }")
+            sql.append(" order by ${it.column.joinToString(",")} ${if(it.asc) "asc" else "desc" }")
         }
 
         limit?.let {

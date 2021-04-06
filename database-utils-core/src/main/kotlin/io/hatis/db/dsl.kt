@@ -1,5 +1,7 @@
 package io.hatis.db
 
+import javax.swing.table.TableColumn
+
 fun sqlInsert(
     tableName: String,
     mode: SqlMode = SqlMode.PG,
@@ -231,11 +233,19 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun sort(columnName: String, asc: Boolean = true) {
-        this.sort = SelectBuilder.Sort(Column(columnName, mode), asc)
+        this.sort = SelectBuilder.Sort(setOf(Column(columnName, mode)), asc)
+    }
+
+    fun sort(columns: Collection<String>, asc: Boolean = true) {
+        this.sort = SelectBuilder.Sort(columns.map {Column(it, mode)}.toSet(), asc)
     }
 
     fun sort(tableName: String, columnName: String, asc: Boolean = true) {
-        this.sort = SelectBuilder.Sort(Column(columnName, mode, tableName), asc)
+        this.sort = SelectBuilder.Sort(setOf(Column(columnName, mode, tableName)), asc)
+    }
+
+    fun sort(tableColumns: Map<String, String>, asc: Boolean = true) {
+        this.sort = SelectBuilder.Sort(tableColumns.entries.map {Column(it.value, mode, table = it.key)}.toSet(), asc)
     }
 
     fun limit(count: Int) {
