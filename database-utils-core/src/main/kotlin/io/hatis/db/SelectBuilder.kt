@@ -27,13 +27,12 @@ class SelectBuilder(
         val params = mutableListOf<Any?>()
         val sql = if(distinct) StringBuilder("select distinct ") else StringBuilder("select ")
 
-        if(columns.isNotEmpty()) {
-            sql.append(columns.joinToString(",") { columnToReturnField(it) })
-            getAggregationPart()?.let { sql.append(",").append(it) }
+        val allColumns = columns.map { columnToReturnField(it) } + getAggregationColumns()
+
+        if(allColumns.isEmpty()) {
+            sql.append("*")
         } else {
-            getAggregationPart()
-                ?.let { sql.append(it) }
-                ?: sql.append("*")
+            sql.append(allColumns.joinToString(","))
         }
 
         sql.append(" from ${escape(tableName)}")
@@ -68,10 +67,10 @@ class SelectBuilder(
         return sql.toString() to params
     }
 
-    private fun columnToReturnField(c: Column): CharSequence =
+    private fun columnToReturnField(c: Column): String =
         if (c.alias != null) "$c as ${c.alias}" else c.toString()
 
-    private fun getAggregationPart() =
+    private fun getAggregationColumns(): Collection<String> =
         aggregation?.let {
             it.functions.entries.mapNotNull { (alias, f) ->
                 when (f) {
@@ -81,7 +80,6 @@ class SelectBuilder(
                         "${f.function} as ${mode.escape(alias)}"
                     else -> null
                 }
-            }
-                .joinToString(",")
-        }
+            } + it.groupBy.map { c -> columnToReturnField(c) }
+        } ?: emptySet()
 }

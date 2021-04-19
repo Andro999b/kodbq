@@ -10,10 +10,10 @@ class Column(
     fun escapeTable() = table?.let { mode.escape(table) }
 
     override fun toString(): String {
-        if(table != null) {
-            return "${mode.escape(table)}.${escapeName()}"
+        return if(table != null) {
+            "${mode.escape(table)}.${escapeName()}"
         } else {
-            return escapeName()
+            escapeName()
         }
     }
 
