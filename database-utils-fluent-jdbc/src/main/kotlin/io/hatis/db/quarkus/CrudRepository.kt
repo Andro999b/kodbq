@@ -47,13 +47,15 @@ abstract class CrudRepository<T> {
             .execute(fluentJdbc)
     }
 
-    open fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean =
+    open fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
+
+    open fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int =
         sqlSelect(tableName) {
             aggregation { count("count") }
             where { actions() }
         }
             .build(fluentJdbc)
-            .singleResult(Mappers.singleLong()) > 0
+            .singleResult(Mappers.singleInteger())
 
     open fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> =
         sqlSelect(tableName) { actions() }

@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.4.30"
+    kotlin("jvm") version "1.4.32"
     id("maven-publish")
 }
 
@@ -7,7 +7,7 @@ repositories {
     mavenCentral()
 }
 
-val releaseVersion = "0.0.29"
+val releaseVersion = "0.0.30"
 version = releaseVersion
 
 subprojects {

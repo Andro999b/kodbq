@@ -1,6 +1,8 @@
 package io.hatis.db.quarkus
 
+import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
+import io.smallrye.mutiny.coroutines.asMulti
 import io.smallrye.mutiny.coroutines.asUni
 import io.vertx.mutiny.sqlclient.Pool
 import io.vertx.mutiny.sqlclient.SqlClient
@@ -8,6 +10,7 @@ import io.vertx.mutiny.sqlclient.SqlClientHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
 import java.lang.IllegalStateException
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext

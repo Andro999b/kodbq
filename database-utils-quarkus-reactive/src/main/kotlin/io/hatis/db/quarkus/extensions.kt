@@ -1,10 +1,8 @@
 package io.hatis.db.quarkus
 
-import io.hatis.db.DeleteBuilder
-import io.hatis.db.InsertBuilder
-import io.hatis.db.SelectBuilder
-import io.hatis.db.UpdateBuilder
+import io.hatis.db.*
 import io.smallrye.mutiny.Uni
+import io.vertx.core.impl.NoStackTraceThrowable
 import io.vertx.mutiny.sqlclient.Row
 import io.vertx.mutiny.sqlclient.RowSet
 import io.vertx.mutiny.sqlclient.SqlClient
@@ -16,6 +14,7 @@ private fun execute(client: SqlClient, sqlAndParams: Pair<String, List<Any?>>): 
     return client
         .preparedQuery(sql)
         .execute(Tuple.tuple(params))
+        .onFailure(NoStackTraceThrowable::class.java).transform { DbUtilsException(it) }
 }
 
 private fun executeInsert(client: SqlClient, sqlAndParams: Pair<String, List<List<Any?>>>): Uni<RowSet<Row>> {
@@ -24,6 +23,7 @@ private fun executeInsert(client: SqlClient, sqlAndParams: Pair<String, List<Lis
     return client
         .preparedQuery(sql)
         .executeBatch(params.map { Tuple.tuple(it) })
+        .onFailure(NoStackTraceThrowable::class.java).transform { DbUtilsException(it) }
 }
 
 private fun paramPlaceholder(index: Int) = "$$index"

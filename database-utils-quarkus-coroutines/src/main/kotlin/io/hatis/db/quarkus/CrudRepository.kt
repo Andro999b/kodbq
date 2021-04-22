@@ -47,14 +47,16 @@ abstract class CrudRepository<T> {
             .await(tx)
     }
 
-    open suspend fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = inTransaction { tx ->
+    open suspend fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
+
+    open suspend fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int = inTransaction { tx ->
         sqlSelect(tableName) {
             aggregation { count("count") }
             where { actions() }
         }
             .await(tx)
             .first()
-            .getInteger("count") > 0
+            .getInteger("count")
     }
 
     open suspend fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
