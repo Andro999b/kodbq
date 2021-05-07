@@ -20,9 +20,17 @@ abstract class CrudRepository<T> {
         inTransaction { tx ->
             if(values.isNotEmpty()) {
                 sqlInsert(tableName) {
-                    values.forEach {
-                        values { actions(it) }
-                    }
+                    values.forEach { values { actions(it) } }
+                }
+                    .await(tx)
+            }
+        }
+
+    protected open suspend fun insertAllAndGetIds(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) =
+        inTransaction { tx ->
+            if(values.isNotEmpty()) {
+                sqlInsert(tableName) {
+                    values.forEach { values { actions(it) } }
                     generatedKeys("id")
                 }
                     .await(tx)
