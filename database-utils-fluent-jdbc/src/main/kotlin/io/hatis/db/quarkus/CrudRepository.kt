@@ -11,23 +11,25 @@ abstract class CrudRepository<T> {
     protected abstract val fluentJdbc: FluentJdbc
     protected abstract val tableName: String
 
-    open fun insert(actions: DSLMutationColumnsBuilder.() -> Unit) {
+    protected open fun insert(actions: DSLMutationColumnsBuilder.() -> Unit) {
         sqlInsert(tableName) {
             values { actions() }
         }
             .execute(fluentJdbc)
     }
 
-    open fun insertAll(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) {
-        sqlInsert(tableName) {
-            values.forEach {
-                values { actions(it) }
+    protected open fun insertAll(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) {
+        if(values.isNotEmpty()) {
+            sqlInsert(tableName) {
+                values.forEach {
+                    values { actions(it) }
+                }
+                generatedKeys("id")
             }
-            generatedKeys("id")
         }
     }
 
-    open fun insertAndGetId(actions: DSLMutationColumnsBuilder.() -> Unit): Long =
+    protected open fun insertAndGetId(actions: DSLMutationColumnsBuilder.() -> Unit): Long =
         sqlInsert(tableName) {
             values { actions() }
             generatedKeys("id")
@@ -37,19 +39,19 @@ abstract class CrudRepository<T> {
             .first().generatedKeys()
             .first()
 
-    open fun update(actions: DSLUpdateBuilder.() -> Unit) {
+    protected open fun update(actions: DSLUpdateBuilder.() -> Unit) {
         sqlUpdate(tableName) { actions() }
             .execute(fluentJdbc)
     }
 
-    open fun delete(actions: DSLUpdateConditionBuilder.() -> Unit) {
+    protected open fun delete(actions: DSLUpdateConditionBuilder.() -> Unit) {
         sqlDelete(tableName) { where { actions() } }
             .execute(fluentJdbc)
     }
 
-    open fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
+    protected open fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
 
-    open fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int =
+    protected open fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int =
         sqlSelect(tableName) {
             aggregation { count("count") }
             where { actions() }
@@ -57,12 +59,12 @@ abstract class CrudRepository<T> {
             .build(fluentJdbc)
             .singleResult(Mappers.singleInteger())
 
-    open fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> =
+    protected open fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> =
         sqlSelect(tableName) { actions() }
             .build(fluentJdbc)
             .listResult(mapper)
 
-    open fun selectOne(actions: DSLSelectBuilder.() -> Unit): Optional<T> =
+    protected open fun selectOne(actions: DSLSelectBuilder.() -> Unit): Optional<T> =
         sqlSelect(tableName) {
             actions()
             limit(1)
@@ -70,12 +72,12 @@ abstract class CrudRepository<T> {
             .build(fluentJdbc)
             .firstResult(mapper)
 
-    open fun selectWhere(actions: DSLSelectConditionBuilder.() -> Unit): Collection<T> =
+    protected open fun selectWhere(actions: DSLSelectConditionBuilder.() -> Unit): Collection<T> =
         sqlSelect(tableName) { where { actions() } }
             .build(fluentJdbc)
             .listResult(mapper)
 
-    open fun selectOneWhere(actions: DSLSelectConditionBuilder.() -> Unit): Optional<T> =
+    protected open fun selectOneWhere(actions: DSLSelectConditionBuilder.() -> Unit): Optional<T> =
         sqlSelect(tableName) {
             where { actions() }
             limit(1)
@@ -83,12 +85,12 @@ abstract class CrudRepository<T> {
             .build(fluentJdbc)
             .firstResult(mapper)
 
-    open fun selectById(id: Long): Optional<T> =
+    protected open fun selectById(id: Long): Optional<T> =
         sqlSelect(tableName) { where { id(id) } }
             .build(fluentJdbc)
             .firstResult(mapper)
 
-    open fun selectById(ids: Collection<Long>): Collection<T> =
+    protected open fun selectById(ids: Collection<Long>): Collection<T> =
         if (ids.isEmpty())
             emptyList()
         else

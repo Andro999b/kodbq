@@ -10,6 +10,7 @@ class SqlGenerator(
     lateinit var generatedSql: String
 
     fun column() = column
+    fun column(name: String) = Column(name, mode = column.mode, table = column.table)
 
     fun value(v: Any): String {
         outParams.add(v)

@@ -9,25 +9,27 @@ abstract class CrudRepository<T> {
     protected abstract val mapper: (rs: Row) -> T
     protected abstract val tableName: String
 
-    open suspend fun insert(actions: DSLMutationColumnsBuilder.() -> Unit) = inTransaction { tx ->
+    protected open suspend fun insert(actions: DSLMutationColumnsBuilder.() -> Unit) = inTransaction { tx ->
         sqlInsert(tableName) {
             values { actions() }
         }
             .await(tx)
     }
 
-    open suspend fun insertAll(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) =
+    protected open suspend fun insertAll(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) =
         inTransaction { tx ->
-            sqlInsert(tableName) {
-                values.forEach {
-                    values { actions(it) }
+            if(values.isNotEmpty()) {
+                sqlInsert(tableName) {
+                    values.forEach {
+                        values { actions(it) }
+                    }
+                    generatedKeys("id")
                 }
-                generatedKeys("id")
+                    .await(tx)
             }
-                .await(tx)
         }
 
-    open suspend fun insertAndGetId(actions: DSLMutationColumnsBuilder.() -> Unit): Long = inTransaction { tx ->
+    protected open suspend fun insertAndGetId(actions: DSLMutationColumnsBuilder.() -> Unit): Long = inTransaction { tx ->
         sqlInsert(tableName) {
             values { actions() }
             generatedKeys("id")
@@ -37,19 +39,19 @@ abstract class CrudRepository<T> {
             .getLong("id")
     }
 
-    open suspend fun update(actions: DSLUpdateBuilder.() -> Unit) = inTransaction { tx ->
+    protected open suspend fun update(actions: DSLUpdateBuilder.() -> Unit) = inTransaction { tx ->
         sqlUpdate(tableName) { actions() }
             .await(tx)
     }
 
-    open suspend fun delete(actions: DSLUpdateConditionBuilder.() -> Unit) = inTransaction { tx ->
+    protected open suspend fun delete(actions: DSLUpdateConditionBuilder.() -> Unit) = inTransaction { tx ->
         sqlDelete(tableName) { where { actions() } }
             .await(tx)
     }
 
-    open suspend fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
+    protected open suspend fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
 
-    open suspend fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int = inTransaction { tx ->
+    protected open suspend fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int = inTransaction { tx ->
         sqlSelect(tableName) {
             aggregation { count("count") }
             where { actions() }
@@ -59,12 +61,12 @@ abstract class CrudRepository<T> {
             .getInteger("count")
     }
 
-    open suspend fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
+    protected open suspend fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
         sqlSelect(tableName) { actions() }
             .awaitAll(tx, mapper)
     }
 
-    open suspend fun selectOne(actions: DSLSelectBuilder.() -> Unit): T? = inTransaction { tx ->
+    protected open suspend fun selectOne(actions: DSLSelectBuilder.() -> Unit): T? = inTransaction { tx ->
         sqlSelect(tableName) {
             actions()
             limit(1)
@@ -72,12 +74,12 @@ abstract class CrudRepository<T> {
             .awaitFirst(tx, mapper)
     }
 
-    open suspend fun selectWhere(actions: DSLSelectConditionBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
+    protected open suspend fun selectWhere(actions: DSLSelectConditionBuilder.() -> Unit): Collection<T> = inTransaction { tx ->
         sqlSelect(tableName) { where { actions() } }
             .awaitAll(tx, mapper)
     }
 
-    open suspend fun selectOneWhere(actions: DSLSelectConditionBuilder.() -> Unit): T? = inTransaction { tx ->
+    protected open suspend fun selectOneWhere(actions: DSLSelectConditionBuilder.() -> Unit): T? = inTransaction { tx ->
         sqlSelect(tableName) {
             where { actions() }
             limit(1)
@@ -85,12 +87,12 @@ abstract class CrudRepository<T> {
             .awaitFirst(tx, mapper)
     }
 
-    open suspend fun selectById(id: Long): T? = inTransaction { tx ->
+    protected open suspend fun selectById(id: Long): T? = inTransaction { tx ->
         sqlSelect(tableName) { where { id(id) } }
             .awaitFirst(tx, mapper)
     }
 
-    open suspend fun selectById(ids: Collection<Long>): Collection<T> =
+    protected open suspend fun selectById(ids: Collection<Long>): Collection<T> =
         if (ids.isEmpty())
             emptyList()
         else
