@@ -12,9 +12,8 @@ enum class WhereOps(val op: String) {
 }
 
 interface WherePart
-interface WhereJoint: WherePart {
-    val parts: Collection<WherePart>
-    val separator: String
+abstract class WhereJoint(val separator: String): WherePart {
+    val parts: MutableList<WherePart> = mutableListOf()
 }
 data class WhereColumn(val column: Column, val op: WhereOps, val params: Any): WherePart {
     val mode get() = column.mode
@@ -22,14 +21,9 @@ data class WhereColumn(val column: Column, val op: WhereOps, val params: Any): W
 data class WhereGeneratedSql(val column: Column, val actions: SqlGenerator.() -> Unit): WherePart
 data class WhereColumnIsNull(val column: Column): WherePart
 data class WhereColumnIsNotNull(val column: Column): WherePart
-data class Or(override val parts: Collection<WherePart>): WhereJoint {
-    override val separator: String
-        get() = " or "
-}
-data class And(override val parts: Collection<WherePart>): WhereJoint {
-    override val separator: String
-        get() = " and "
-}
+class Or: WhereJoint(" or ")
+class And: WhereJoint(" and ")
+
 internal fun buildWhere(
         wherePart: WherePart,
         outParams: MutableList<Any?>,

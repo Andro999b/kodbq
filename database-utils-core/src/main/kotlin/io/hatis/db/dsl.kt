@@ -1,7 +1,5 @@
 package io.hatis.db
 
-import javax.swing.table.TableColumn
-
 fun sqlInsert(
     tableName: String,
     mode: SqlMode = SqlMode.PG,
@@ -176,7 +174,7 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun where(builderActions: DSLSelectConditionBuilder.() -> Unit) {
-        val dslConditionBuilder = DSLSelectConditionBuilder(tableName, mode)
+        val dslConditionBuilder = DSLSelectConditionBuilder(mode, tableName)
         dslConditionBuilder.builderActions()
 
         this.dslConditionBuilder = dslConditionBuilder
@@ -237,7 +235,7 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun sort(columns: Collection<String>, asc: Boolean = true) {
-        this.sort = SelectBuilder.Sort(columns.map {Column(it, mode)}.toSet(), asc)
+        this.sort = SelectBuilder.Sort(columns.map { Column(it, mode) }.toSet(), asc)
     }
 
     fun sort(tableName: String, columnName: String, asc: Boolean = true) {
@@ -245,7 +243,7 @@ class DSLSelectBuilder(private val tableName: String, private val mode: SqlMode)
     }
 
     fun sort(tableColumns: Map<String, String>, asc: Boolean = true) {
-        this.sort = SelectBuilder.Sort(tableColumns.entries.map {Column(it.value, mode, table = it.key)}.toSet(), asc)
+        this.sort = SelectBuilder.Sort(tableColumns.entries.map { Column(it.value, mode, table = it.key) }.toSet(), asc)
     }
 
     fun limit(count: Int) {
@@ -326,54 +324,57 @@ class DSLJoinBuilder(private val joinColumn: Column, private val onTable: String
     internal fun createJoin(joinMode: SelectBuilder.JoinMode) = SelectBuilder.Join(joinColumn, onColumn, joinMode)
 }
 
-class DSLSelectConditionBuilder(private val tableName: String? = null, mode: SqlMode) :
-    DSLHierarchyConditionBuilder(tableName, mode) {
+class DSLSelectConditionBuilder(mode: SqlMode, private val tableName: String? = null) :
+    DSLHierarchyConditionBuilder(mode, tableName) {
     fun table(tableName: String, builderActions: DSLConditionBuilder.() -> Unit) {
-        DSLConditionBuilder(tableName, columnConditions, mode).builderActions()
+        DSLConditionBuilder(mode, tableName, andJoint).builderActions()
     }
 
     fun or(builderActions: DSLSelectConditionBuilder.() -> Unit) {
-        val builder = DSLSelectConditionBuilder(tableName, mode)
+        val builder = DSLSelectConditionBuilder(mode, tableName)
         builder.builderActions()
-        subConditions.add(builder)
+        orJoint.parts.add(builder.createWhereCondition())
+    }
+
+    fun and(builderActions: DSLSelectConditionBuilder.() -> Unit) {
+        val builder = DSLSelectConditionBuilder(mode, tableName)
+        builder.builderActions()
+        andJoint.parts.add(builder.createWhereCondition())
     }
 }
 
-class DSLUpdateConditionBuilder(mode: SqlMode) : DSLHierarchyConditionBuilder(null, mode) {
+class DSLUpdateConditionBuilder(mode: SqlMode, joint: WhereJoint = And()) : DSLHierarchyConditionBuilder(mode, null) {
     fun or(builderActions: DSLUpdateConditionBuilder.() -> Unit) {
         val builder = DSLUpdateConditionBuilder(mode)
         builder.builderActions()
-        subConditions.add(builder)
+        orJoint.parts.add(builder.createWhereCondition())
+    }
+
+    fun and(builderActions: DSLUpdateConditionBuilder.() -> Unit) {
+        val builder = DSLUpdateConditionBuilder(mode)
+        builder.builderActions()
+        andJoint.parts.add(builder.createWhereCondition())
     }
 }
 
-open class DSLHierarchyConditionBuilder(tableName: String? = null, mode: SqlMode) :
-    DSLConditionBuilder(tableName, mutableListOf(), mode) {
-    protected val subConditions: MutableList<DSLHierarchyConditionBuilder> = mutableListOf()
+open class DSLHierarchyConditionBuilder(mode: SqlMode, tableName: String? = null) :
+    DSLConditionBuilder(mode, tableName) {
 
-    private fun isNotEmpty() = columnConditions.isNotEmpty()
+    protected val orJoint: Or = Or()
 
-    internal fun createWhereCondition(): WherePart {
-        val conditions = mutableListOf(this)
-            .plus(subConditions)
-            .filter { it.isNotEmpty() }
-
-        if (conditions.size == 1)
-            return generateWhere(conditions.first())
-
-        return Or(conditions.map { generateWhere(it) })
-    }
-
-    private fun generateWhere(it: DSLHierarchyConditionBuilder) = when (it) {
-        this -> And(it.columnConditions)
-        else -> it.createWhereCondition()
-    }
+    internal fun createWhereCondition(): WherePart =
+        if (orJoint.parts.isEmpty()) {
+            andJoint
+        } else {
+            orJoint.parts.add(0, andJoint)
+            orJoint
+        }
 }
 
 open class DSLConditionBuilder(
+    protected val mode: SqlMode,
     private val tableName: String? = null,
-    protected val columnConditions: MutableList<WherePart> = mutableListOf(),
-    protected val mode: SqlMode
+    protected val andJoint: And = And()
 ) {
     fun id(value: Any) {
         column("id", WhereOps.eq, value)
@@ -398,19 +399,37 @@ open class DSLConditionBuilder(
     }
 
     fun column(columnName: String, op: WhereOps, value: Any) {
-        columnConditions.add(WhereColumn(Column(columnName, mode, tableName), op, value))
+        andJoint.parts.add(WhereColumn(Column(columnName, mode, tableName), op, value))
     }
 
     fun columnIsNull(columnName: String) {
-        columnConditions.add(WhereColumnIsNull(Column(columnName, mode, tableName)))
+        andJoint.parts.add(WhereColumnIsNull(Column(columnName, mode, tableName)))
     }
 
     fun columnNotNull(columnName: String) {
-        columnConditions.add(WhereColumnIsNotNull(Column(columnName, mode, tableName)))
+        andJoint.parts.add(WhereColumnIsNotNull(Column(columnName, mode, tableName)))
     }
 
     fun generate(columnName: String, actions: SqlGenerator.() -> Unit) {
-        columnConditions.add(WhereGeneratedSql(Column(columnName, mode, tableName), actions))
+        andJoint.parts.add(WhereGeneratedSql(Column(columnName, mode, tableName), actions))
     }
 }
 
+fun main() {
+    val builder = sqlSelect("t1") {
+        where {
+            column("a", 1)
+            column("c", 3)
+            and {
+                table("t2") {
+                    column("b", 2)
+                }
+                or {
+                    column("d", 4)
+                }
+            }
+        }
+    }
+
+    println(builder.buildSqlAndParams { "?" })
+}
