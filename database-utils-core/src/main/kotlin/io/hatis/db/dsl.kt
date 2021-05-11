@@ -414,22 +414,3 @@ open class DSLConditionBuilder(
         andJoint.parts.add(WhereGeneratedSql(Column(columnName, mode, tableName), actions))
     }
 }
-
-fun main() {
-    val builder = sqlSelect("t1") {
-        where {
-            column("a", 1)
-            column("c", 3)
-            and {
-                table("t2") {
-                    column("b", 2)
-                }
-                or {
-                    column("d", 4)
-                }
-            }
-        }
-    }
-
-    println(builder.buildSqlAndParams { "?" })
-}
