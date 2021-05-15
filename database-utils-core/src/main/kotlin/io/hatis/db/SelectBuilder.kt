@@ -15,7 +15,7 @@ class SelectBuilder(
     data class Limit(val offset: Int = 0, val count: Int = 0)
 
     enum class JoinMode(val sql: String) { INNER(""), LEFT("left"), RIGHT("right"), FULL("full"), }
-    data class Join(val joinTableColumn: Column, val onColumn: Column, val joinMode: JoinMode)
+    data class Join(val joinTableColumn: Column, val onColumn: Column, val joinMode: JoinMode, var alias: String? = null)
 
     interface AggregationFunction
     data class ColumnFunction(val function: String, val column: Column? = null): AggregationFunction
@@ -37,9 +37,9 @@ class SelectBuilder(
 
         sql.append(" from ${escape(tableName)}")
 
-        joins.forEach { (joinTableColumn, onColumn, joinMode) ->
+        joins.forEach { (joinTableColumn, onColumn, joinMode, alias) ->
             if(joinMode.sql.isNotEmpty()) sql.append(" ").append(joinMode.sql)
-            sql.append(" join ${joinTableColumn.escapeTable()} on ${joinTableColumn}=${onColumn}")
+            sql.append(" join ${joinTableColumn.escapeTable()}${alias?.let { " as $it" }} on ${joinTableColumn}=${onColumn}")
         }
 
         where?.let {

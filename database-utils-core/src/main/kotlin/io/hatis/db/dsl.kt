@@ -73,12 +73,6 @@ class DSLMutationColumnsBuilder(private val mode: SqlMode) {
         columns[Column(columnName, mode)] = value
     }
 
-    fun columnNotNull(columnName: String, value: Any?) {
-        value?.let {
-            columns[Column(columnName, mode)] = it
-        }
-    }
-
     fun column(columnName: Enum<*>, value: Any?) {
         columns[Column(columnName.name, mode)] = value
     }
@@ -312,6 +306,7 @@ open class DSLAggregationFunctionsBuilder(
 
 class DSLJoinBuilder(private val joinColumn: Column, private val onTable: String) {
     private lateinit var onColumn: Column
+    private var alias: String? = null
 
     fun on(columnName: String) {
         onColumn = Column(columnName, joinColumn.mode, onTable)
@@ -321,13 +316,18 @@ class DSLJoinBuilder(private val joinColumn: Column, private val onTable: String
         onColumn = Column(columnName, joinColumn.mode, tableName)
     }
 
-    internal fun createJoin(joinMode: SelectBuilder.JoinMode) = SelectBuilder.Join(joinColumn, onColumn, joinMode)
+    internal fun createJoin(joinMode: SelectBuilder.JoinMode) = SelectBuilder.Join(
+        joinColumn,
+        onColumn,
+        joinMode,
+        alias = alias
+    )
 }
 
 class DSLSelectConditionBuilder(mode: SqlMode, private val tableName: String? = null) :
     DSLHierarchyConditionBuilder(mode, tableName) {
-    fun table(tableName: String, builderActions: DSLConditionBuilder.() -> Unit) {
-        DSLConditionBuilder(mode, tableName, andJoint).builderActions()
+    fun table(tableOrAliasName: String, builderActions: DSLConditionBuilder.() -> Unit) {
+        DSLConditionBuilder(mode, tableOrAliasName, andJoint).builderActions()
     }
 
     fun or(builderActions: DSLSelectConditionBuilder.() -> Unit) {
@@ -343,7 +343,7 @@ class DSLSelectConditionBuilder(mode: SqlMode, private val tableName: String? = 
     }
 }
 
-class DSLUpdateConditionBuilder(mode: SqlMode, joint: WhereJoint = And()) : DSLHierarchyConditionBuilder(mode, null) {
+class DSLUpdateConditionBuilder(mode: SqlMode) : DSLHierarchyConditionBuilder(mode, null) {
     fun or(builderActions: DSLUpdateConditionBuilder.() -> Unit) {
         val builder = DSLUpdateConditionBuilder(mode)
         builder.builderActions()
