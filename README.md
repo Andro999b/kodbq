@@ -87,6 +87,9 @@ sqlSelect("table_name") {
             "c2" to listOf(1,2,3), // "in"
             "c3" to null // is null
         )
+        and { // explict and join
+            // ...
+        }
         or { // or join
             // ...
         }
