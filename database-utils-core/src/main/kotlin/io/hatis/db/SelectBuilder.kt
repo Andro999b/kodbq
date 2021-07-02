@@ -39,7 +39,7 @@ class SelectBuilder(
 
         joins.forEach { (joinTableColumn, onColumn, joinMode, alias) ->
             if(joinMode.sql.isNotEmpty()) sql.append(" ").append(joinMode.sql)
-            sql.append(" join ${joinTableColumn.escapeTable()}${alias?.let { " as $it" }} on ${joinTableColumn}=${onColumn}")
+            sql.append(" join ${joinTableColumn.escapeTable()}${alias?.let { " as $it" } ?: ""} on ${joinTableColumn}=${onColumn}")
         }
 
         where?.let {
