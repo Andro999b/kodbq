@@ -1,5 +1,5 @@
-val coroutineVersion = "1.4.2"
-val mutinyVersion = "0.15.0"
+val coroutineVersion = "1.5.0"
+val mutinyVersion = "0.18.0"
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutineVersion}")

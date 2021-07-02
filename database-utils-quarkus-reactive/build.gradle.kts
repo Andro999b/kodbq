@@ -1,4 +1,4 @@
-val quarkusVersion = "1.13.2.Final"
+val quarkusVersion = "2.0.0.Final"
 
 dependencies {
     api(project(":database-utils-core"))
