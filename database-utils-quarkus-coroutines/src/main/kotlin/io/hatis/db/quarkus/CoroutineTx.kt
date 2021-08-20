@@ -7,6 +7,7 @@ import io.smallrye.mutiny.coroutines.asUni
 import io.vertx.mutiny.sqlclient.Pool
 import io.vertx.mutiny.sqlclient.SqlClient
 import io.vertx.mutiny.sqlclient.SqlClientHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -27,7 +28,7 @@ class CoroutineTxActions(
 ) {
 
     fun <T> withTxUni(body: suspend () -> T): Uni<T> = SqlClientHelper.inTransactionUni(pool) { tx ->
-        GlobalScope.async(Dispatchers.Unconfined + CoroutineTx(tx)) { body() }.asUni()
+        CoroutineScope(context = Dispatchers.Unconfined + CoroutineTx(tx)).async { body() }.asUni()
     }
 
     companion object {
