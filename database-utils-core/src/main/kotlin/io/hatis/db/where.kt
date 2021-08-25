@@ -46,12 +46,16 @@ internal fun buildWhere(
                 when (wherePart.op) {
                     WhereOps.`in`-> { // expand in params
                         val params =  wherePart.params as Collection<*>
-                        "${wherePart.column} in (${
-                            params.joinToString(",") {
-                                outParams.add(it)
-                                paramPlaceholder(outParams.size + paramsIndexOffset)
+                        when(wherePart.mode) {
+                            SqlMode.PG -> {
+                                outParams.add(params.toTypedArray())
+                                "${wherePart.column} = any(${paramPlaceholder(outParams.size + paramsIndexOffset)})"
                             }
-                        })"
+                            else -> {
+                                outParams.add(params)
+                                "${wherePart.column} in (${paramPlaceholder(outParams.size + paramsIndexOffset)})"
+                            }
+                        }
                     }
                     else -> {
                         outParams.add(wherePart.params)
