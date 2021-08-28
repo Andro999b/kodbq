@@ -63,7 +63,10 @@ abstract class CrudRepository<T> {
                 set { actions() }
             }
         } else {
-            insert { actions() }
+            insert {
+                column("id", id)
+                actions()
+            }
         }
 
     protected open suspend fun delete(actions: DSLUpdateConditionBuilder.() -> Unit) = inTransaction { tx ->
