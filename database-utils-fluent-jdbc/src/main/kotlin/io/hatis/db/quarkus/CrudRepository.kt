@@ -50,6 +50,32 @@ abstract class CrudRepository<T> {
             .execute(fluentJdbc)
     }
 
+    protected open fun upsert(id: Long, actions: DSLMutationColumnsBuilder.() -> Unit) =
+        if (exist { id(id) }) {
+            update {
+                where { id(id) }
+                set { actions() }
+            }
+        } else {
+            insert {
+                column("id", id)
+                actions()
+            }
+        }
+
+    protected open fun upsert(cols: Map<String, Any>, actions: DSLMutationColumnsBuilder.() -> Unit) =
+        if (exist { columns(cols) }) {
+            update {
+                where { columns(cols)  }
+                set { actions() }
+            }
+        } else {
+            insert {
+                columns(cols)
+                actions()
+            }
+        }
+
     protected open fun delete(actions: DSLUpdateConditionBuilder.() -> Unit) {
         sqlDelete(tableName) { where { actions() } }
             .execute(fluentJdbc)

@@ -394,6 +394,16 @@ open class DSLConditionBuilder(
         }
     }
 
+    fun columns(map: Map<String, Any?>) {
+        map.forEach { (columnName, value) ->
+            when (value) {
+                null -> columnIsNull(columnName)
+                is Collection<*> -> column(columnName, value as Collection<Any>)
+                else -> column(columnName, value)
+            }
+        }
+    }
+
     fun column(columnName: String, value: Collection<Any>) {
         column(columnName, WhereOps.`in`, value)
     }

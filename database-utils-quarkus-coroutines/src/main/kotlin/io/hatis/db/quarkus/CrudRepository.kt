@@ -69,6 +69,19 @@ abstract class CrudRepository<T> {
             }
         }
 
+    protected open suspend fun upsert(cols: Map<String, Any>, actions: DSLMutationColumnsBuilder.() -> Unit) =
+        if (exist { columns(cols) }) {
+            update {
+                where { columns(cols)  }
+                set { actions() }
+            }
+        } else {
+            insert {
+                columns(cols)
+                actions()
+            }
+        }
+
     protected open suspend fun delete(actions: DSLUpdateConditionBuilder.() -> Unit) = inTransaction { tx ->
         sqlDelete(tableName) { where { actions() } }
             .await(tx)
