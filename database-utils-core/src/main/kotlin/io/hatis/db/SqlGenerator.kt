@@ -7,7 +7,7 @@ class SqlGenerator(
     private val paramPlaceholder: (Int) -> String,
     private val column: Column
 ) {
-    lateinit var generatedSql: String
+    var generatedSql: String? = null
 
     fun column() = column
     fun column(name: String) = Column(name, mode = column.mode, table = column.table)
@@ -17,8 +17,22 @@ class SqlGenerator(
         return paramPlaceholder(outParams.size + paramOffset)
     }
 
-    fun sql(s: String) {
-        generatedSql = s
+    fun updateSql(s: String) {
+        if(usage == Usage.update) {
+            generatedSql = s
+        }
+    }
+
+    fun insertSql(s: String) {
+        if(usage == Usage.insert) {
+            generatedSql = s
+        }
+    }
+
+    fun whereSql(s: String) {
+        if(usage == Usage.where) {
+            generatedSql = s
+        }
     }
 
     data class GeneratedPart(val actions: SqlGenerator.() -> Unit)

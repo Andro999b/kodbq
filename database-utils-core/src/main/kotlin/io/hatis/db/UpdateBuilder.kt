@@ -7,22 +7,25 @@ class UpdateBuilder(
     val mode: SqlMode = SqlMode.PG
 ) {
     private fun buildParams(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String) =
-        columns.entries.joinToString(",") { (key, value) ->
-            if(value is SqlGenerator.GeneratedPart) {
-                val actions = value.actions
-                val generator = SqlGenerator(
-                    usage = SqlGenerator.Usage.update,
-                    outParams = outParams,
-                    paramPlaceholder = paramPlaceholder,
-                    column = key
-                )
-                generator.actions()
-                generator.generatedSql
-            } else {
-                outParams.add(value)
-                "$key=${paramPlaceholder(outParams.size)}"
+        columns.entries
+            .mapNotNull { (key, value) ->
+                if (value is SqlGenerator.GeneratedPart) {
+                    val actions = value.actions
+                    val generator = SqlGenerator(
+                        usage = SqlGenerator.Usage.update,
+                        outParams = outParams,
+                        paramPlaceholder = paramPlaceholder,
+                        column = key
+                    )
+                    generator.actions()
+                    generator.generatedSql
+                } else {
+                    outParams.add(value)
+                    "$key=${paramPlaceholder(outParams.size)}"
+                }
             }
-        }
+            .joinToString(",")
+
 
     fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
         val params = mutableListOf<Any?>()

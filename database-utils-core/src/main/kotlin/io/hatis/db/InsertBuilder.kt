@@ -6,27 +6,38 @@ class InsertBuilder(
     val generatedKeys: Set<String> = emptySet(),
     val mode: SqlMode = SqlMode.PG
 ) {
-    private fun buildParamsAndSql(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String, columns: Set<Map.Entry<Column, Any?>>) =
-        columns.joinToString(",") { (key, value) ->
-            if(value is SqlGenerator.GeneratedPart) {
-                val actions = value.actions
-                val generator = SqlGenerator(
-                    usage = SqlGenerator.Usage.insert,
-                    outParams = outParams,
-                    paramPlaceholder = paramPlaceholder,
-                    column = key
-                )
-                generator.actions()
-                generator.generatedSql
-            } else {
-                outParams.add(value)
-                paramPlaceholder(outParams.size)
+    private fun buildColumnsAndValue(
+        paramPlaceholder: (Int) -> String,
+        columns: Set<Map.Entry<Column, Any?>>
+    ): List<Pair<Column, String?>> {
+        val outParams = mutableListOf<Any?>()
+        return columns
+            .mapNotNull { (key, value) ->
+                if (value is SqlGenerator.GeneratedPart) {
+                    val actions = value.actions
+                    val generator = SqlGenerator(
+                        usage = SqlGenerator.Usage.insert,
+                        outParams = outParams,
+                        paramPlaceholder = paramPlaceholder,
+                        column = key
+                    )
+                    generator.actions()
+                    generator.generatedSql?.let { key to it }
+                } else {
+                    outParams.add(value)
+                    key to paramPlaceholder(outParams.size)
+                }
             }
-        }
+    }
+//            .joinToString(",")
 
-    private fun buildParams(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String, columns: Set<Map.Entry<Column, Any?>>) =
+    private fun buildParams(
+        outParams: MutableList<Any?>,
+        paramPlaceholder: (Int) -> String,
+        columns: Set<Map.Entry<Column, Any?>>
+    ) =
         columns.forEach { (key, value) ->
-            if(value is SqlGenerator.GeneratedPart) {
+            if (value is SqlGenerator.GeneratedPart) {
                 val actions = value.actions
                 val generator = SqlGenerator(
                     usage = SqlGenerator.Usage.insert,
@@ -42,12 +53,12 @@ class InsertBuilder(
 
     fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<List<Any?>>> {
         val firstRow = values.first()
-        val columns = firstRow.entries
-        var sql = "insert into ${mode.escape(tableName)}(${columns.joinToString(",") { it.key.toString() }}) " +
-                "values(${buildParamsAndSql(mutableListOf(), paramPlaceholder, columns) })"
+        val keyValues = buildColumnsAndValue(paramPlaceholder, firstRow.entries)
+        var sql = "insert into ${mode.escape(tableName)}(${keyValues.joinToString(",") { it.first.toString() }}) " +
+                "values(${keyValues.joinToString(",") { it.second.toString() }})"
 
-        if(generatedKeys.isNotEmpty()) {
-            if(mode == SqlMode.PG) {
+        if (generatedKeys.isNotEmpty()) {
+            if (mode == SqlMode.PG) {
                 sql += " returning ${generatedKeys.joinToString(",", transform = mode.escape)}"
             }
         }
