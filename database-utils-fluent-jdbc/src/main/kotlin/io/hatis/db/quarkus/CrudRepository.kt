@@ -23,6 +23,7 @@ abstract class CrudRepository<T> {
             sqlInsert(tableName) {
                 values.forEach { values { actions(it) } }
             }
+                .execute(fluentJdbc)
         }
     }
 
@@ -32,6 +33,9 @@ abstract class CrudRepository<T> {
                 values.forEach { values { actions(it) } }
                 generatedKeys("id")
             }
+                .build(fluentJdbc)
+                .runFetchGenKeys(Mappers.singleLong())
+                .first().generatedKeys()
         }
     }
 
@@ -83,13 +87,18 @@ abstract class CrudRepository<T> {
 
     protected open fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
 
-    protected open fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int =
+    protected open fun count(actions: (DSLSelectConditionBuilder.() -> Unit)? = null): Int =
         sqlSelect(tableName) {
             aggregation { count("count") }
-            where { actions() }
+            if(actions != null) where { actions() }
         }
             .build(fluentJdbc)
             .singleResult(Mappers.singleInteger())
+
+    protected open suspend fun selectAll(): Collection<T> =
+        sqlSelect(tableName)
+            .build(fluentJdbc)
+            .listResult(mapper)
 
     protected open fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> =
         sqlSelect(tableName) { actions() }

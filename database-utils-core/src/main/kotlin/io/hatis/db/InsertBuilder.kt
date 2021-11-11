@@ -5,7 +5,7 @@ class InsertBuilder(
     val values: List<Map<Column, Any?>>,
     val generatedKeys: Set<String> = emptySet(),
     val mode: SqlMode = SqlMode.PG
-) {
+): SqlBuilder {
     private fun buildColumnsAndValue(
         paramPlaceholder: (Int) -> String,
         columns: Set<Map.Entry<Column, Any?>>
@@ -51,7 +51,7 @@ class InsertBuilder(
             }
         }
 
-    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<List<Any?>>> {
+    override fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<List<Any?>>> {
         val firstRow = values.first()
         val keyValues = buildColumnsAndValue(paramPlaceholder, firstRow.entries)
         var sql = "insert into ${mode.escape(tableName)}(${keyValues.joinToString(",") { it.first.toString() }}) " +

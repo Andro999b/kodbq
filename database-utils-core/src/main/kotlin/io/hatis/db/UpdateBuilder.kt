@@ -5,7 +5,7 @@ class UpdateBuilder(
     val columns: Map<Column, Any?>,
     val where: WherePart?,
     val mode: SqlMode = SqlMode.PG
-) {
+): SqlBuilder {
     private fun buildParams(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String) =
         columns.entries
             .mapNotNull { (key, value) ->
@@ -27,7 +27,7 @@ class UpdateBuilder(
             .joinToString(",")
 
 
-    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
+    override fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
         val params = mutableListOf<Any?>()
         val whereParams = mutableListOf<Any?>()
 

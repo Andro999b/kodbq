@@ -10,7 +10,7 @@ class SelectBuilder(
     val distinct: Boolean = false,
     val aggregation: Aggregation? = null,
     val mode: SqlMode = SqlMode.PG
-) {
+): SqlBuilder {
     data class Sort(val column: Collection<Column>, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
 
@@ -22,7 +22,7 @@ class SelectBuilder(
     data class DBFunction(val function: String): AggregationFunction
     data class Aggregation(val groupBy: Collection<Column>, val functions: Map<String, AggregationFunction>)
 
-    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
+    override fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
         val escape = mode.escape
         val params = mutableListOf<Any?>()
         val sql = if(distinct) StringBuilder("select distinct ") else StringBuilder("select ")

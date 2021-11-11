@@ -7,7 +7,7 @@ repositories {
     mavenCentral()
 }
 
-val releaseVersion = "0.0.42"
+val releaseVersion = "0.0.43"
 version = releaseVersion
 
 subprojects {

@@ -7,9 +7,16 @@ import io.vertx.mutiny.sqlclient.Row
 import io.vertx.mutiny.sqlclient.RowSet
 import io.vertx.mutiny.sqlclient.SqlClient
 import io.vertx.mutiny.sqlclient.Tuple
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("database-utils")
 
 private fun execute(client: SqlClient, sqlAndParams: Pair<String, List<Any?>>): Uni<RowSet<Row>> {
     val (sql, params) = sqlAndParams
+
+    if(log.isDebugEnabled) {
+        log.debug("$sql $params")
+    }
 
     return client
         .preparedQuery(sql)
@@ -19,6 +26,10 @@ private fun execute(client: SqlClient, sqlAndParams: Pair<String, List<Any?>>): 
 
 private fun executeInsert(client: SqlClient, sqlAndParams: Pair<String, List<List<Any?>>>): Uni<RowSet<Row>> {
     val (sql, params) = sqlAndParams
+
+    if(log.isDebugEnabled) {
+        log.debug("$sql $params")
+    }
 
     return client
         .preparedQuery(sql)

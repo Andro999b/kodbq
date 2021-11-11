@@ -2,7 +2,6 @@ package io.hatis.db.quarkus
 
 import io.hatis.db.*
 import io.hatis.db.quarkus.CoroutineTxActions.Companion.inTransaction
-import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.vertx.mutiny.sqlclient.Row
 
 abstract class CrudRepository<T> {
@@ -89,14 +88,18 @@ abstract class CrudRepository<T> {
 
     protected open suspend fun exist(actions: DSLSelectConditionBuilder.() -> Unit): Boolean = count(actions) > 0
 
-    protected open suspend fun count(actions: DSLSelectConditionBuilder.() -> Unit): Int = inTransaction { tx ->
+    protected open suspend fun count(actions: (DSLSelectConditionBuilder.() -> Unit)? = null): Int = inTransaction { tx ->
         sqlSelect(tableName) {
             aggregation { count("count") }
-            where { actions() }
+            if(actions != null) where { actions() }
         }
             .await(tx)
             .first()
             .getInteger("count")
+    }
+
+    protected open suspend fun selectAll(): Collection<T>  = inTransaction { tx ->
+        sqlSelect(tableName).awaitAll(tx, mapper)
     }
 
     protected open suspend fun select(actions: DSLSelectBuilder.() -> Unit): Collection<T> = inTransaction { tx ->

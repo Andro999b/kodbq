@@ -23,10 +23,10 @@ fun sqlUpdate(
 fun sqlSelect(
     tableName: String,
     mode: SqlMode = SqlMode.PG,
-    builderActions: DSLSelectBuilder.() -> Unit
+    builderActions: (DSLSelectBuilder.() -> Unit)? = null
 ): SelectBuilder {
     val dslInsertBuilder = DSLSelectBuilder(tableName, mode)
-    dslInsertBuilder.builderActions()
+    if(builderActions != null) dslInsertBuilder.builderActions()
     return dslInsertBuilder.createSelectBuilder()
 }
 
