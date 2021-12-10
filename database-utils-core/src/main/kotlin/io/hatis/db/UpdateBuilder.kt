@@ -9,10 +9,10 @@ class UpdateBuilder(
     private fun buildParams(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String) =
         columns.entries
             .mapNotNull { (key, value) ->
-                if (value is SqlGenerator.GeneratedPart) {
+                if (value is DSLColumnSqlGenerator.CustomSqlPart) {
                     val actions = value.actions
-                    val generator = SqlGenerator(
-                        usage = SqlGenerator.Usage.update,
+                    val generator = DSLColumnSqlGenerator(
+                        usage = DSLColumnSqlGenerator.Usage.update,
                         outParams = outParams,
                         paramPlaceholder = paramPlaceholder,
                         column = key

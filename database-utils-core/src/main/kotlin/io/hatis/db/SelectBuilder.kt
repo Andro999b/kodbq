@@ -5,31 +5,36 @@ class SelectBuilder(
     val columns: Collection<Column>,
     val joins: Collection<Join>,
     val where: WherePart?,
-    val sort: Sort? = null,
+    val sort: Collection<Sort> = emptySet(),
     val limit: Limit? = null,
     val distinct: Boolean = false,
     val aggregation: Aggregation? = null,
     val mode: SqlMode = SqlMode.PG
-): SqlBuilder {
-    data class Sort(val column: Collection<Column>, val asc: Boolean = true)
+) : SqlBuilder {
+    data class Sort(val column: Column, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
 
     enum class JoinMode(val sql: String) { INNER(""), LEFT("left"), RIGHT("right"), FULL("full"), }
-    data class Join(val joinTableColumn: Column, val onColumn: Column, val joinMode: JoinMode, var alias: String? = null)
+    data class Join(
+        val joinTableColumn: Column,
+        val onColumn: Column,
+        val joinMode: JoinMode,
+        var alias: String? = null
+    )
 
     interface AggregationFunction
-    data class ColumnFunction(val function: String, val column: Column? = null): AggregationFunction
-    data class DBFunction(val function: String): AggregationFunction
+    data class ColumnFunction(val function: String, val column: Column? = null) : AggregationFunction
+    data class DBFunction(val function: String) : AggregationFunction
     data class Aggregation(val groupBy: Collection<Column>, val functions: Map<String, AggregationFunction>)
 
     override fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
         val escape = mode.escape
         val params = mutableListOf<Any?>()
-        val sql = if(distinct) StringBuilder("select distinct ") else StringBuilder("select ")
+        val sql = if (distinct) StringBuilder("select distinct ") else StringBuilder("select ")
 
         val allColumns = columns.map { columnToReturnField(it) } + getAggregationColumns()
 
-        if(allColumns.isEmpty()) {
+        if (allColumns.isEmpty()) {
             sql.append("*")
         } else {
             sql.append(allColumns.joinToString(","))
@@ -38,28 +43,29 @@ class SelectBuilder(
         sql.append(" from ${escape(tableName)}")
 
         joins.forEach { (joinTableColumn, onColumn, joinMode, alias) ->
-            if(joinMode.sql.isNotEmpty()) sql.append(" ").append(joinMode.sql)
+            if (joinMode.sql.isNotEmpty()) sql.append(" ").append(joinMode.sql)
             sql.append(" join ${joinTableColumn.escapeTable()}${alias?.let { " as $it" } ?: ""} on ${joinTableColumn}=${onColumn}")
         }
 
         where?.let {
             val whereString = buildWhere(it, params, escape, paramPlaceholder)
-            if(whereString?.isNotEmpty() == true)
+            if (whereString?.isNotEmpty() == true)
                 sql.append(" where ").append(whereString)
         }
 
         aggregation?.let { (groupBy, _) ->
-            if(groupBy.isNotEmpty())
+            if (groupBy.isNotEmpty())
                 sql.append(" group by ").append(groupBy.joinToString(","))
         }
 
-        sort?.let {
-            sql.append(" order by ${it.column.joinToString(",")} ${if(it.asc) "asc" else "desc" }")
+        if (sort.isNotEmpty()) {
+            sql.append(" order by ")
+                .append(sort.joinToString(",") { "${it.column} ${if (it.asc) "asc" else "desc"}" })
         }
 
         limit?.let {
             sql.append(" offset ").append(it.offset)
-            if(it.count > 0) {
+            if (it.count > 0) {
                 sql.append(" limit ").append(it.count)
             }
         }

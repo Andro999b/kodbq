@@ -11,14 +11,14 @@ abstract class CrudRepository<T> {
     protected abstract val fluentJdbc: FluentJdbc
     protected abstract val tableName: String
 
-    protected open fun insert(actions: DSLMutationColumnsBuilder.() -> Unit) {
+    protected open fun insert(actions: DSLUpdateColumnsBuilder.() -> Unit) {
         sqlInsert(tableName) {
             values { actions() }
         }
             .execute(fluentJdbc)
     }
 
-    protected open fun insertAll(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) {
+    protected open fun insertAll(values: Collection<T>, actions: DSLUpdateColumnsBuilder.(T) -> Unit) {
         if(values.isNotEmpty()) {
             sqlInsert(tableName) {
                 values.forEach { values { actions(it) } }
@@ -27,7 +27,7 @@ abstract class CrudRepository<T> {
         }
     }
 
-    protected open fun insertAllAndGetIds(values: Collection<T>, actions: DSLMutationColumnsBuilder.(T) -> Unit) {
+    protected open fun insertAllAndGetIds(values: Collection<T>, actions: DSLUpdateColumnsBuilder.(T) -> Unit) {
         if(values.isNotEmpty()) {
             sqlInsert(tableName) {
                 values.forEach { values { actions(it) } }
@@ -39,7 +39,7 @@ abstract class CrudRepository<T> {
         }
     }
 
-    protected open fun insertAndGetId(actions: DSLMutationColumnsBuilder.() -> Unit): Long =
+    protected open fun insertAndGetId(actions: DSLUpdateColumnsBuilder.() -> Unit): Long =
         sqlInsert(tableName) {
             values { actions() }
             generatedKeys("id")
@@ -54,7 +54,7 @@ abstract class CrudRepository<T> {
             .execute(fluentJdbc)
     }
 
-    protected open fun upsert(id: Long, actions: DSLMutationColumnsBuilder.() -> Unit) =
+    protected open fun upsert(id: Long, actions: DSLUpdateColumnsBuilder.() -> Unit) =
         if (exist { id(id) }) {
             update {
                 where { id(id) }
@@ -67,7 +67,7 @@ abstract class CrudRepository<T> {
             }
         }
 
-    protected open fun upsert(cols: Map<String, Any>, actions: DSLMutationColumnsBuilder.() -> Unit) =
+    protected open fun upsert(cols: Map<String, Any>, actions: DSLUpdateColumnsBuilder.() -> Unit) =
         if (exist { columns(cols) }) {
             update {
                 where { columns(cols)  }

@@ -1,6 +1,6 @@
 package io.hatis.db
 
-class SqlGenerator(
+class DSLColumnSqlGenerator(
     val usage: Usage,
     private var paramOffset: Int = 0,
     private val outParams: MutableList<Any?>,
@@ -12,7 +12,15 @@ class SqlGenerator(
     fun column() = column
     fun column(name: String) = Column(name, mode = column.mode, table = column.table)
 
+    fun c() = column
+    fun c(name: String) = Column(name, mode = column.mode, table = column.table)
+
     fun value(v: Any): String {
+        outParams.add(v)
+        return paramPlaceholder(outParams.size + paramOffset)
+    }
+
+    fun v(v: Any): String {
         outParams.add(v)
         return paramPlaceholder(outParams.size + paramOffset)
     }
@@ -35,6 +43,6 @@ class SqlGenerator(
         }
     }
 
-    data class GeneratedPart(val actions: SqlGenerator.() -> Unit)
+    data class CustomSqlPart(val actions: DSLColumnSqlGenerator.() -> Unit)
     enum class Usage { insert, update, where }
 }

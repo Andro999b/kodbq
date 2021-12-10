@@ -20,7 +20,7 @@ data class WhereColumn(val column: Column, val op: WhereOps, val params: Any) : 
     val mode get() = column.mode
 }
 
-data class WhereGeneratedSql(val column: Column, val actions: SqlGenerator.() -> Unit) : WherePart
+data class WhereGeneratedSql(val column: Column, val actions: DSLColumnSqlGenerator.() -> Unit) : WherePart
 data class WhereColumnIsNull(val column: Column) : WherePart
 data class WhereColumnIsNotNull(val column: Column) : WherePart
 class Or : WhereJoint(" or ")
@@ -73,8 +73,8 @@ internal fun buildWhere(
         is WhereColumnIsNull -> "${wherePart.column} is null"
         is WhereGeneratedSql -> {
             val actions = wherePart.actions
-            val generator = SqlGenerator(
-                SqlGenerator.Usage.where,
+            val generator = DSLColumnSqlGenerator(
+                DSLColumnSqlGenerator.Usage.where,
                 paramsIndexOffset,
                 outParams,
                 paramPlaceholder,
