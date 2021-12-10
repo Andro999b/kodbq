@@ -7,7 +7,7 @@ Toolkit project that utilize kotlin dsl functional to generate sql
 ### Installation
 
 You can check out the latest version here:  
-https://bintray.com/andro999b/maven/database-utils-core
+https://jitpack.io/#Andro999b/kotlin-database-utils
 
 ```kotlin
 repositories {
