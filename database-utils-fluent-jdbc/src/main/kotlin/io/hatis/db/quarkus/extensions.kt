@@ -1,9 +1,6 @@
 package io.hatis.db.quarkus
 
-import io.hatis.db.DeleteBuilder
-import io.hatis.db.InsertBuilder
-import io.hatis.db.SelectBuilder
-import io.hatis.db.UpdateBuilder
+import io.hatis.db.*
 import org.codejargon.fluentjdbc.api.FluentJdbc
 import org.codejargon.fluentjdbc.api.query.BatchQuery
 import org.codejargon.fluentjdbc.api.query.SelectQuery
@@ -18,7 +15,7 @@ private fun update(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<Any?>
         .namedParams(toNamedParams(params))
 }
 
-private fun insert(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<List<Any?>>>): BatchQuery {
+private fun batch(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<List<Any?>>>): BatchQuery {
     val (sql, params) = sqlAndParams
 
     return fluentJdbc.query()
@@ -44,10 +41,14 @@ private fun paramPlaceholderNamed(index: Int) = ":$index"
 fun UpdateBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
 fun UpdateBuilder.execute(fluentJdbc: FluentJdbc): UpdateResult = build(fluentJdbc).run()
 
-fun InsertBuilder.build(fluentJdbc: FluentJdbc) = insert(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
+fun InsertBuilder.build(fluentJdbc: FluentJdbc) = batch(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
 fun InsertBuilder.execute(fluentJdbc: FluentJdbc): Collection<UpdateResult> = build(fluentJdbc).run()
 
 fun SelectBuilder.build(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
 
 fun DeleteBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
 fun DeleteBuilder.execute(fluentJdbc: FluentJdbc): UpdateResult = build(fluentJdbc).run()
+
+fun QueryBuilder.buildSelect(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
+fun QueryBuilder.buildUpdate(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholderNamed))
+fun QueryBuilder.executeUpdate(fluentJdbc: FluentJdbc): UpdateResult = buildUpdate(fluentJdbc).run()

@@ -20,10 +20,7 @@ class DSLColumnSqlGenerator(
         return paramPlaceholder(outParams.size + paramOffset)
     }
 
-    fun v(v: Any): String {
-        outParams.add(v)
-        return paramPlaceholder(outParams.size + paramOffset)
-    }
+    fun v(v: Any) = value(v)
 
     fun updateSql(s: String) {
         if(usage == Usage.update) {

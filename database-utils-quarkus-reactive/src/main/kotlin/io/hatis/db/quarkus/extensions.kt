@@ -39,7 +39,5 @@ private fun executeInsert(client: SqlClient, sqlAndParams: Pair<String, List<Lis
 
 private fun paramPlaceholder(index: Int) = "$$index"
 
-fun UpdateBuilder.execute(client: SqlClient) = execute(client, buildSqlAndParams(::paramPlaceholder))
+fun SqlBuilder.execute(client: SqlClient) = execute(client, buildSqlAndParams(::paramPlaceholder))
 fun InsertBuilder.execute(client: SqlClient) = executeInsert(client, buildSqlAndParams(::paramPlaceholder))
-fun SelectBuilder.execute(client: SqlClient) = execute(client, buildSqlAndParams(::paramPlaceholder))
-fun DeleteBuilder.execute(client: SqlClient) = execute(client, buildSqlAndParams(::paramPlaceholder))

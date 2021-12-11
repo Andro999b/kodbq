@@ -40,3 +40,9 @@ fun sqlDelete(
     return dslInsertBuilder.createDeleteBuilder()
 }
 
+fun sql(
+    mode: SqlMode = SqlMode.PG,
+    generatorActions: DSLQueryGenerator.() -> Unit
+) = QueryBuilder(mode, generatorActions)
+
+
