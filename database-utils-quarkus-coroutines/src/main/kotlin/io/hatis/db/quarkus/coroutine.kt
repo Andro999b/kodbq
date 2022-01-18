@@ -9,3 +9,5 @@ suspend fun SqlBuilder.await(client: SqlClient) = execute(client).awaitSuspendin
 suspend fun InsertBuilder.await(client: SqlClient) = execute(client).awaitSuspending()
 suspend fun <T> SelectBuilder.awaitFirst(client: SqlClient, mapper: (Row) -> T): T? = await(client).firstOrNull()?.let(mapper)
 suspend fun <T> SelectBuilder.awaitAll(client: SqlClient, mapper: (Row) -> T): Collection<T>  = await(client).map(mapper)
+suspend fun <T> QueryBuilder.awaitFirst(client: SqlClient, mapper: (Row) -> T): T? = await(client).firstOrNull()?.let(mapper)
+suspend fun <T> QueryBuilder.awaitAll(client: SqlClient, mapper: (Row) -> T): Collection<T>  = await(client).map(mapper)
