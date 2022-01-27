@@ -54,6 +54,14 @@ sqlInsert("table_name") {
 }
 ```
 
+#### Basic query 
+
+```kotlin
+sql {
+    query("select ${c("id")} from ${t("t1")} where f = ${v(1)}")
+}
+```
+
 #### Select All
 ```kotlin
 sqlSelect("table_name"){}
@@ -229,7 +237,7 @@ insertSelect("test") {
 ```
 
 #### CrudRepository
-You can extend abstract class `CrudRepository` to avoid write some common code:  
+You can extend abstract class `CrudRepository` to avoid write some common code:
 
 ```kotlin
 class MyPojoRepository(override val fluentJdbc: FluentJdbc): CrudRepository() {
@@ -243,3 +251,72 @@ class MyPojoRepository(override val fluentJdbc: FluentJdbc): CrudRepository() {
     //...
 }
 ```
+
+### Quarkus Reactive support
+
+You can execute query with reactive client and get results as:
+
+```kotlin
+sqlSelect("test") {
+    // query
+}
+    .execute(client)
+```
+
+#### Quarkus Reactive transactions with kotlin coroutines
+
+Library allow to use transactions with kotlin coroutines in quarkus projects. 
+To achieve you add dependency to you project: 
+```kotlin
+implementation("com.github.Andro999b.kotlin-database-utils:database-utils-quarkus-coroutines:${version}")
+```
+Then create transactions actions bean:
+```kotlin
+@Dependent
+class TxActionsConfig {
+
+    @Produces
+    fun createTxActions(pool: PgPool) = CoroutineTxActions(pool)
+}
+```
+
+now you can create transactions scope and execute queries in it:
+
+```kotlin
+txActions.withTx {
+    //...transaction scope
+}
+
+// or
+txActions.withTxUni {
+    //...transaction scope
+} // returns Uni
+
+//... somewhere inside transaction scope
+
+CoroutineTxActions.inTransaction { tx ->
+    sqlSelect("test") {
+        // query
+    }
+        .await(tx)
+        // .awaitFirst(tx) { row -> Pojo() }
+        // .awaitAll(tx) { row -> Pojo() }
+}
+```
+
+You can use suspend CrudRepository inside transaction scope:
+
+```kotlin
+class MyPojoRepository: CrudRepository() {
+    override val tableName: String = "pojo_table"
+    override val mapper = { row: Row -> Pojo(/* init fields*/)}
+    
+    suspend fun getById(id: Long) = selectById(id)
+    suspend fun getByField(field: String) = selectOneWhere { column("field", field) }
+    suspend fun create(obj: Pojo) = insertAndGetId { column("field", pojo.field) }
+    
+    //...
+}
+```
+
+
