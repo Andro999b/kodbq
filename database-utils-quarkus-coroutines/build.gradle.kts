@@ -1,9 +1,9 @@
-val coroutineVersion = "1.5.0"
-val mutinyVersion = "1.1.2"
+val coroutineVersion = "1.6.1"
+val mutinyVersion = "1.4.0"
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutineVersion}")
-    implementation("io.smallrye.reactive:mutiny-kotlin:${mutinyVersion}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutineVersion")
+    implementation("io.smallrye.reactive:mutiny-kotlin:$mutinyVersion")
 
     api(project(":database-utils-quarkus-reactive"))
 }

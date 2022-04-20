@@ -236,22 +236,6 @@ insertSelect("test") {
     .execute(fluentJdbc)
 ```
 
-#### CrudRepository
-You can extend abstract class `CrudRepository` to avoid write some common code:
-
-```kotlin
-class MyPojoRepository(override val fluentJdbc: FluentJdbc): CrudRepository() {
-    override val tableName: String = "pojo_table"
-    override val mapper = { rs: ResultSet -> Pojo(/* init fields*/)}
-    
-    fun getById(id: Long) = selectById(id)
-    fun getByField(field: String) = selectOneWhere { column("field", field) }
-    fun create(obj: Pojo) = insertAndGetId { column("field", pojo.field) }
-    
-    //...
-}
-```
-
 ### Quarkus Reactive support
 
 You can execute query with reactive client and get results as:
@@ -301,21 +285,6 @@ CoroutineTxActions.inTransaction { tx ->
         .await(tx)
         // .awaitFirst(tx) { row -> Pojo() }
         // .awaitAll(tx) { row -> Pojo() }
-}
-```
-
-You can use suspend CrudRepository inside transaction scope:
-
-```kotlin
-class MyPojoRepository: CrudRepository() {
-    override val tableName: String = "pojo_table"
-    override val mapper = { row: Row -> Pojo(/* init fields*/)}
-    
-    suspend fun getById(id: Long) = selectById(id)
-    suspend fun getByField(field: String) = selectOneWhere { column("field", field) }
-    suspend fun create(obj: Pojo) = insertAndGetId { column("field", pojo.field) }
-    
-    //...
 }
 ```
 

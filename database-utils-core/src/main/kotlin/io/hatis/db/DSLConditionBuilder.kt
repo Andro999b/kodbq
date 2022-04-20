@@ -15,6 +15,7 @@ open class DSLConditionBuilder(
 
     fun columns(vararg pairs: Pair<String, Any?>) {
         pairs.forEach { (columnName, value) ->
+            @Suppress("UNCHECKED_CAST")
             when (value) {
                 null -> columnIsNull(columnName)
                 is Collection<*> -> column(columnName, value as Collection<Any>)
@@ -25,6 +26,7 @@ open class DSLConditionBuilder(
 
     fun columns(map: Map<String, Any?>) {
         map.forEach { (columnName, value) ->
+            @Suppress("UNCHECKED_CAST")
             when (value) {
                 null -> columnIsNull(columnName)
                 is Collection<*> -> column(columnName, value as Collection<Any>)

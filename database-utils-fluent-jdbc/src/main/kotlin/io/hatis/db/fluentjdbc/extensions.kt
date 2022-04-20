@@ -1,4 +1,4 @@
-package io.hatis.db.quarkus
+package io.hatis.db.fluentjdbc
 
 import io.hatis.db.*
 import org.codejargon.fluentjdbc.api.FluentJdbc
@@ -35,6 +35,7 @@ private fun toNamedParams(params: List<Any?>) = params
     .mapIndexed { index, value -> "${index + 1}" to value }
     .toMap()
 
+@Suppress("UNUSED_PARAMETER")
 private fun paramPlaceholder(index: Int) = "?"
 private fun paramPlaceholderNamed(index: Int) = ":$index"
 
