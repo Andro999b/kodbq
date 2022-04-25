@@ -16,13 +16,11 @@ abstract class WhereJoint(val separator: String) : WherePart {
     val parts: MutableList<WherePart> = mutableListOf()
 }
 
-data class WhereColumn(val column: Column, val op: WhereOps, val params: Any) : WherePart {
-    val mode get() = column.dialect
-}
+data class WhereColumn(val column: Named, val op: WhereOps, val params: Any, val dialect: SqlDialect) : WherePart
 
 data class WhereGeneratedSql(val nativeSql: NativeSqlColumn) : WherePart
-data class WhereColumnIsNull(val column: Column) : WherePart
-data class WhereColumnIsNotNull(val column: Column) : WherePart
+data class WhereColumnIsNull(val column: Named) : WherePart
+data class WhereColumnIsNotNull(val column: Named) : WherePart
 class Or : WhereJoint("or")
 class And : WhereJoint("and")
 
@@ -45,26 +43,26 @@ private class WhereBuilder(
                     wherePart.parts.size == 1 ->
                         buildRecursive(wherePart.parts.first(), depth + 1)
                     wherePart.parts.size > 1 -> {
-                        if(depth != 0) builder.append("(")
+                        if (depth != 0) builder.append("(")
                         var lastLength = builder.length
                         wherePart.parts.forEachIndexed { index, p ->
-                            if(index != 0 && lastLength != builder.length)  {
+                            if (index != 0 && lastLength != builder.length) {
                                 builder.append(" ").append(wherePart.separator).append(" ")
                                 lastLength = builder.length
                             }
                             buildRecursive(p, depth + 1)
                         }
-                        if(depth != 0) builder.append(")")
+                        if (depth != 0) builder.append(")")
                     }
                 }
             is WhereColumn -> {
                 when (wherePart.op) {
                     WhereOps.IN -> { // expand in params
-                        when (wherePart.mode) {
+                        when (wherePart.dialect) {
                             SqlDialect.PG -> {
                                 outParams.add(wherePart.params)
                                 builder
-                                    .append(wherePart.column)
+                                    .append(wherePart.column.escapeName())
                                     .append(" = any(")
                                     .append(paramPlaceholder(outParams.size + paramsIndexOffset))
                                     .append(")")
@@ -72,7 +70,7 @@ private class WhereBuilder(
                             else -> {
                                 outParams.add(wherePart.params)
                                 builder
-                                    .append(wherePart.column)
+                                    .append(wherePart.column.escapeName())
                                     .append(" in(")
                                     .append(paramPlaceholder(outParams.size + paramsIndexOffset))
                                     .append(")")
@@ -81,7 +79,7 @@ private class WhereBuilder(
                     }
                     else -> {
                         outParams.add(wherePart.params)
-                        val column = wherePart.column
+                        val column = wherePart.column.escapeName()
                         val placeholder = paramPlaceholder(outParams.size + paramsIndexOffset)
                         builder
                             .append(column)
@@ -92,17 +90,18 @@ private class WhereBuilder(
                     }
                 }
             }
-            is WhereColumnIsNotNull -> builder.append(wherePart.column).append(" is not null")
-            is WhereColumnIsNull -> builder.append(wherePart.column).append(" is null")
+            is WhereColumnIsNotNull -> builder.append(wherePart.column.escapeName()).append(" is not null")
+            is WhereColumnIsNull -> builder.append(wherePart.column.escapeName()).append(" is null")
             is WhereGeneratedSql -> {
-                builder.append(wherePart.nativeSql.generate(
-                    NativeSqlColumn.Usage.CONDITION,
-                    paramsIndexOffset,
-                    outParams,
-                    paramPlaceholder,
-                ))
+                builder.append(
+                    wherePart.nativeSql.generate(
+                        NativeSqlColumn.Usage.CONDITION,
+                        paramsIndexOffset,
+                        outParams,
+                        paramPlaceholder,
+                    )
+                )
             }
-            else -> throw IllegalArgumentException("Unknown where part $wherePart")
         }
     }
 }
@@ -110,7 +109,6 @@ private class WhereBuilder(
 internal fun buildWhere(
     wherePart: WherePart,
     outParams: MutableList<Any?>,
-    escape: (String) -> String,
     paramPlaceholder: (Int) -> String,
     paramsIndexOffset: Int = 0
 ): String = WhereBuilder(outParams, paramPlaceholder, paramsIndexOffset).build(wherePart)

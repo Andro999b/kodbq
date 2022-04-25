@@ -32,7 +32,8 @@ subprojects {
         kotlinOptions.javaParameters = true
     }
 
-    publishing {
+    if(!name.contains("test")) { // exclude test project
+        publishing {
 //        repositories {
 //            maven {
 //                name = "GitHubPackages"
@@ -43,9 +44,10 @@ subprojects {
 //                }
 //            }
 //        }
-        publications {
-            register<MavenPublication>("gpr") {
-                from(components["java"])
+            publications {
+                register<MavenPublication>("gpr") {
+                    from(components["java"])
+                }
             }
         }
     }

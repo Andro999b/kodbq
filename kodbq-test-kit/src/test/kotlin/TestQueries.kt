@@ -2,9 +2,9 @@ import io.hatis.kodbq.SqlDialect
 import io.hatis.kodbq.kodbqDialect
 import io.hatis.kodbq.test.*
 import io.kotest.core.spec.style.StringSpec
-import java.time.Instant
+import java.time.OffsetDateTime
 
-class TestPGQueries : StringSpec({
+class TestQueries : StringSpec({
     beforeTest { kodbqDialect = SqlDialect.PG }
     "select all" {
         selectAllUsers()
@@ -13,6 +13,10 @@ class TestPGQueries : StringSpec({
     "count users" {
         countUsers()
             .expectSqlAndParams("select count(\"users\".*) as count from \"users\"")
+    }
+    "select users names" {
+        selectUsersNames()
+            .expectSqlAndParams("select distinct \"users\".\"name\" from \"users\"")
     }
     "select user with id" {
         val userId = 1L
@@ -54,24 +58,42 @@ class TestPGQueries : StringSpec({
         selectUsersNameAndAge()
             .expectSqlAndParams("select \"users\".\"name\",\"users\".\"age\" as userAge from \"users\"")
     }
-    "select orders from now" {
-        val time = Instant.now()
-        selectOrderFrom(time)
+    "select orders since" {
+        val time = OffsetDateTime.now()
+        selectOrderSince(time)
             .expectSqlAndParams("select * from \"orders\" where \"orders\".\"created\" > ?", listOf(time))
     }
-    "select orders to" {
-        val time = Instant.now()
-        selectOrderTo(time)
+    "select orders until" {
+        val time = OffsetDateTime.now()
+        selectOrderUntil(time)
             .expectSqlAndParams("select * from \"orders\" where \"orders\".\"created\" < ?", listOf(time))
     }
-    "select users orders" {
+    "select user orders" {
         val userId = 1L
         selectUserOrders(userId)
             .expectSqlAndParams(
                 "select \"orders\".\"id\" as orderId,\"users\".\"name\",\"users\".\"id\" as userId " +
                         "from \"orders\" join \"users\" on \"users\".\"id\" = \"orders\".\"user_id\" " +
-                        "where \"orders\".\"id\" = ?",
+                        "where \"orders\".\"user_id\" = ?",
                 listOf(userId)
+            )
+    }
+    "select orders with user from" {
+        val from = OffsetDateTime.now()
+        selectUsersOrdersFrom(from)
+            .expectSqlAndParams(
+                "select " +
+                        "\"orders\".\"id\" as orderId," +
+                        "\"orders\".\"article\"," +
+                        "\"orders\".\"price\"," +
+                        "\"users\".\"name\"," +
+                        "\"users\".\"id\" as userId," +
+                        "\"order_status\".\"status\" as order_status " +
+                        "from \"orders\" " +
+                        "join \"users\" on \"users\".\"id\" = \"orders\".\"user_id\" " +
+                        "join \"order_status\" on \"order_status\".\"order_id\" = \"orders\".\"id\" " +
+                        "where \"orders\".\"created\" = ? and \"users\".\"deleted\" is not null",
+                listOf(from)
             )
     }
     "select users orders count" {
@@ -83,8 +105,12 @@ class TestPGQueries : StringSpec({
             )
     }
     "select users sorted by age desc and created date asc" {
-        selectUsersSorted()
-            .expectSqlAndParams("select * from \"users\" order by \"age\" desc,\"created\" asc")
+        selectUsersSortedByAgeAndCreated()
+            .expectSqlAndParams("select * from \"users\" order by \"users\".\"age\" desc,\"users\".\"created\"")
+    }
+    "select orders sorted by created and price" {
+        selectOrdersByCteatedAndPrice()
+            .expectSqlAndParams("select * from \"orders\" order by \"orders\".\"created\",\"orders\".\"price\"")
     }
     "select users with age in ranges" {
         val ranges = listOf(

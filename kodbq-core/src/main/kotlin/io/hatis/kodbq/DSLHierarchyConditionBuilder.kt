@@ -1,8 +1,6 @@
 package io.hatis.kodbq
 
-open class DSLHierarchyConditionBuilder(mode: SqlDialect, tableName: String? = null) :
-    DSLConditionBuilder(mode, tableName) {
-
+open class DSLHierarchyConditionBuilder(mode: SqlDialect, tableName: String?): DSLConditionBuilder(mode, tableName) {
     protected val orJoint: Or = Or()
 
     internal fun createWhereCondition(): WherePart =

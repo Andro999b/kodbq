@@ -1,6 +1,6 @@
 package io.hatis.kodbq.quarkus
 
-import io.hatis.kodbq.DbUtilsException
+import io.hatis.kodbq.KodbqException
 import io.hatis.kodbq.InsertBuilder
 import io.hatis.kodbq.SqlBuilder
 import io.smallrye.mutiny.Uni
@@ -23,7 +23,7 @@ private fun execute(client: SqlClient, sqlAndParams: Pair<String, List<Any?>>): 
     return client
         .preparedQuery(sql)
         .execute(Tuple.tuple(params))
-        .onFailure(NoStackTraceThrowable::class.java).transform { DbUtilsException(it) }
+        .onFailure(NoStackTraceThrowable::class.java).transform { KodbqException(it) }
 }
 
 private fun executeInsert(client: SqlClient, sqlAndParams: Pair<String, List<List<Any?>>>): Uni<RowSet<Row>> {
@@ -36,7 +36,7 @@ private fun executeInsert(client: SqlClient, sqlAndParams: Pair<String, List<Lis
     return client
         .preparedQuery(sql)
         .executeBatch(params.map { Tuple.tuple(it) })
-        .onFailure(NoStackTraceThrowable::class.java).transform { DbUtilsException(it) }
+        .onFailure(NoStackTraceThrowable::class.java).transform { KodbqException(it) }
 }
 
 private fun paramPlaceholder(index: Int) = "$$index"

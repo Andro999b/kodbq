@@ -1,4 +1,4 @@
-package io.hatis.kodbq.spring.r2dbc
+package io.hatis.kodbq.spring.jdbc
 
 import io.hatis.kodbq.*
 import org.springframework.jdbc.core.JdbcTemplate

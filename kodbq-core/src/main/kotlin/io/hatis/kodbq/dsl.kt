@@ -43,7 +43,7 @@ fun sqlDelete(
 }
 
 fun sql(
-    dialect: SqlDialect = SqlDialect.PG,
+    dialect: SqlDialect = kodbqDialect,
     generatorFun: NativeSql.Generator.() -> String
 ) = QueryBuilder(NativeSql(dialect, generatorFun))
 

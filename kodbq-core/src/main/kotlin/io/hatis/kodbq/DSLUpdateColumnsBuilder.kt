@@ -15,11 +15,7 @@ open class DSLUpdateColumnsBuilder(private val dialect: SqlDialect) {
         columns[Column(columnName, dialect)] = value
     }
 
-    fun column(columnName: Enum<*>, value: Any?) {
-        columns[Column(columnName.name, dialect)] = value
-    }
-
-    fun nativeSql(columnName: String, actions: NativeSqlColumn.Generator.() -> String) {
+    fun native(columnName: String, actions: NativeSqlColumn.Generator.() -> String?) {
         val column = Column(columnName, dialect)
         columns[column] = NativeSqlColumn(column, actions)
     }

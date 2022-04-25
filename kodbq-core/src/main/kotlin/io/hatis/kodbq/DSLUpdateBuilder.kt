@@ -1,16 +1,16 @@
 package io.hatis.kodbq
 
-class DSLUpdateBuilder(private val mode: SqlDialect) {
+class DSLUpdateBuilder(private val dialect: SqlDialect) {
     private lateinit var dslColumnsBuilder: DSLUpdateColumnsBuilder
     private var dslConditionBuilder: DSLUpdateConditionBuilder? = null
 
     fun set(builderActions: DSLUpdateColumnsBuilder.() -> Unit) {
-        dslColumnsBuilder = DSLUpdateColumnsBuilder(mode)
+        dslColumnsBuilder = DSLUpdateColumnsBuilder(dialect)
         dslColumnsBuilder.builderActions()
     }
 
     fun where(builderActions: DSLUpdateConditionBuilder.() -> Unit) {
-        val dslConditionBuilder = DSLUpdateConditionBuilder(mode)
+        val dslConditionBuilder = DSLUpdateConditionBuilder(dialect)
         dslConditionBuilder.builderActions()
         this.dslConditionBuilder = dslConditionBuilder
     }
@@ -19,6 +19,6 @@ class DSLUpdateBuilder(private val mode: SqlDialect) {
         tableName = tableName,
         columns = dslColumnsBuilder.columns,
         where = dslConditionBuilder?.createWhereCondition(),
-        dialect = mode
+        dialect = dialect
     )
 }

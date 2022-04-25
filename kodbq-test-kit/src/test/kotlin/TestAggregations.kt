@@ -11,6 +11,12 @@ class TestAggregations: StringSpec({
         }
             .expectSqlAndParams("select count(`table`.*) as res from `table`")
     }
+    "select count by column" {
+        sqlSelect("table") {
+            returns { count("col", "res") }
+        }
+            .expectSqlAndParams("select count(`table`.`col`) as res from `table`")
+    }
     "select sum" {
         sqlSelect("table") {
             returns { sum("col","res") }

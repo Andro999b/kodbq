@@ -3,7 +3,7 @@ package io.hatis.kodbq
 
 class NativeSqlColumn(
     private val column: Column,
-    private val generateFun: Generator.() -> String
+    private val generateFun: Generator.() -> String?
 ) {
 
     fun generate(
@@ -20,8 +20,11 @@ class NativeSqlColumn(
         private val outParams: MutableList<Any?>,
         private val paramPlaceholder: (Int) -> String
     ) {
-        fun column(name: String) = Column(name, dialect = column.dialect, table = column.table)
-        fun c(name: String) = Column(name, dialect = column.dialect, table = column.table)
+        fun column(name: String) = Column(name, column.dialect, table = column.table)
+        fun column(tableName: String, name: String) = Column(name, column.dialect, table = tableName)
+        fun c(name: String) = column(name)
+
+        fun c(tableName: String, name: String) = column(tableName, name)
 
         val c = column
 

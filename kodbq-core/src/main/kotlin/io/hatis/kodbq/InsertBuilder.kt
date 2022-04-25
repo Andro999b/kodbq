@@ -24,6 +24,7 @@ class InsertBuilder(
                     key to paramPlaceholder(outParams.size)
                 }
             }
+            .filter { it.second != null }
     }
 
     private fun buildParams(

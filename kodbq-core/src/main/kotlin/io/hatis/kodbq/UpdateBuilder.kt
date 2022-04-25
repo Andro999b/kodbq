@@ -7,7 +7,7 @@ class UpdateBuilder(
     val dialect: SqlDialect
 ): SqlBuilder {
     private fun buildParams(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String) =
-        columns.entries.joinToString(",") { (key, value) ->
+        columns.entries.mapNotNull { (key, value) ->
             if (value is NativeSqlColumn) {
                 value.generate(
                     NativeSqlColumn.Usage.UPDATE,
@@ -19,6 +19,7 @@ class UpdateBuilder(
                 "$key=${paramPlaceholder(outParams.size)}"
             }
         }
+            .joinToString(",")
 
 
     override fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
@@ -28,7 +29,7 @@ class UpdateBuilder(
         var sql = "update ${dialect.escape(tableName)} set " + buildParams(params, paramPlaceholder)
 
         where?.let {
-            sql += " where ${buildWhere(it, whereParams, dialect.escape, paramPlaceholder, params.size)}"
+            sql += " where ${buildWhere(it, whereParams, paramPlaceholder, params.size)}"
         }
 
         return sql to (params + whereParams)

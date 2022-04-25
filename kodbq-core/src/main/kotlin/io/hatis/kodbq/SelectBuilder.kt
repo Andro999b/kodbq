@@ -18,8 +18,7 @@ class SelectBuilder(
     data class Join(
         val joinTableColumn: Column,
         val onColumn: Column,
-        val joinMode: JoinMode,
-        var alias: String? = null
+        val joinMode: JoinMode
     )
 
     data class Returns(
@@ -31,7 +30,7 @@ class SelectBuilder(
         val escape = dialect.escape
         val params = mutableListOf<Any?>()
         val sql = buildString {
-            if (distinct) append("select distinct") else append("select ")
+            if (distinct) append("select distinct ") else append("select ")
             val allColumns = returns.columns + groupByColumns
             val allColumnNames = allColumns.map { columnToReturnField(it) } + getFunctions(params, paramPlaceholder)
 
@@ -44,17 +43,13 @@ class SelectBuilder(
             append(" from ")
             append(escape(tableName))
 
-            joins.forEach { (joinTableColumn, onColumn, joinMode, alias) ->
+            joins.forEach { (joinTableColumn, onColumn, joinMode) ->
                 if (joinMode.sql.isNotEmpty()) {
                     append(" ")
                     append(joinMode.sql)
                 }
                 append(" join ")
                 append(joinTableColumn.escapeTable())
-                alias?.let {
-                    append(" as ")
-                    append(it)
-                }
                 append(" on ")
                 append(joinTableColumn)
                 append(" = ")
@@ -62,7 +57,7 @@ class SelectBuilder(
             }
 
             where?.let {
-                val whereString = buildWhere(it, params, escape, paramPlaceholder)
+                val whereString = buildWhere(it, params, paramPlaceholder)
                 if (whereString.isNotEmpty()) {
                     append(" where ")
                     append(whereString)
@@ -76,7 +71,7 @@ class SelectBuilder(
 
             if (sort.isNotEmpty()) {
                 append(" order by ")
-                appendWithDelimiter(sort.map { "${it.column} ${if (it.asc) "asc" else "desc"}" })
+                appendWithDelimiter(sort.map { "${it.column}${if (it.asc) "" else " desc"}" })
             }
 
             limit?.let {
@@ -105,8 +100,7 @@ class SelectBuilder(
                     )
                     "$functionSql as $alias"
                 }
-                is SimpleFunction ->
-                    "${f.function}(${f.column}) as $alias"
+                is SimpleFunction -> "$f as $alias"
                 else -> null
             }
         }

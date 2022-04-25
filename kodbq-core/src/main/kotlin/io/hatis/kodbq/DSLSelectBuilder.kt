@@ -8,6 +8,7 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
     private var groupByColumns: MutableSet<Column> = mutableSetOf()
     private var limit: SelectBuilder.Limit? = null
     private var distinct: Boolean = false
+    private val joinBuilder = JoinBuilder(tableName, joins)
 
     fun distinct() {
         distinct = true
@@ -26,62 +27,42 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         this.dslConditionBuilder = dslConditionBuilder
     }
 
-    fun join(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
-        addJoin(
-            DSLJoinBuilder(Column(joinColumn, dialect, joinTable), tableName),
-            SelectBuilder.JoinMode.INNER,
-            builderActions
-        )
+    fun join(joinTable: String, joinColumnName: String) = joinBuilder.apply {
+        joinColumn = Column(joinColumnName, dialect, joinTable)
+        joinMode = SelectBuilder.JoinMode.INNER
     }
 
-    fun leftJoin(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
-        addJoin(
-            DSLJoinBuilder(Column(joinColumn, dialect, joinTable), tableName),
-            SelectBuilder.JoinMode.LEFT,
-            builderActions
-        )
+    fun leftJoin(joinTable: String, joinColumnName: String) = joinBuilder.apply {
+        joinColumn = Column(joinColumnName, dialect, joinTable)
+        joinMode = SelectBuilder.JoinMode.LEFT
     }
 
 
-    fun rightJoin(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
-        addJoin(
-            DSLJoinBuilder(Column(joinColumn, dialect, joinTable), tableName),
-            SelectBuilder.JoinMode.RIGHT,
-            builderActions
-        )
+    fun rightJoin(joinTable: String, joinColumnName: String) = joinBuilder.apply {
+        joinColumn = Column(joinColumnName, dialect, joinTable)
+        joinMode = SelectBuilder.JoinMode.RIGHT
     }
 
 
-    fun fullJoin(joinTable: String, joinColumn: String, builderActions: DSLJoinBuilder.() -> Unit) {
-        addJoin(
-            DSLJoinBuilder(Column(joinColumn, dialect, joinTable), tableName),
-            SelectBuilder.JoinMode.FULL,
-            builderActions
-        )
+    fun fullJoin(joinTable: String, joinColumnName: String) = joinBuilder.apply {
+        joinColumn = Column(joinColumnName, dialect, joinTable)
+        joinMode = SelectBuilder.JoinMode.FULL
     }
 
-    private fun addJoin(
-        builder: DSLJoinBuilder,
-        JoinMode: SelectBuilder.JoinMode,
-        builderActions: DSLJoinBuilder.() -> Unit,
-    ) {
-        builder.builderActions()
-        joins.add(builder.createJoin(JoinMode))
-    }
 
     fun sort(columnName: String, asc: Boolean = true) {
-        this.sort += SelectBuilder.Sort(Column(columnName, dialect), asc)
+        sortByTable(tableName, columnName, asc)
     }
 
     fun sort(columns: Collection<String>, asc: Boolean = true) {
-        this.sort += columns.map { SelectBuilder.Sort(Column(it, dialect), asc) }.toSet()
+        sortByTable(tableName, columns, asc)
     }
 
-    fun sort(tableName: String, columnName: String, asc: Boolean = true) {
+    fun sortByTable(tableName: String, columnName: String, asc: Boolean = true) {
         this.sort += SelectBuilder.Sort(Column(columnName, dialect, tableName), asc)
     }
 
-    fun sort(tableName: String, columns: Collection<String>, asc: Boolean = true) {
+    fun sortByTable(tableName: String, columns: Collection<String>, asc: Boolean = true) {
         this.sort += columns.map { SelectBuilder.Sort(Column(it, dialect, tableName), asc) }.toSet()
     }
 
@@ -101,9 +82,7 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
     }
 
     fun groupBy(vararg columnNames: String) {
-        columnNames.forEach {
-            groupByColumns += Column(it, dialect, tableName)
-        }
+        groupByTable(tableName, *columnNames)
     }
 
     fun groupByTable(tableName: String, vararg columnNames: String) {
@@ -123,4 +102,19 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         groupByColumns = groupByColumns,
         dialect = dialect
     )
+
+    class JoinBuilder(private val tableName: String, private val joins: MutableList<SelectBuilder.Join>) {
+        internal lateinit var joinColumn: Column
+        internal lateinit var joinMode: SelectBuilder.JoinMode
+
+        infix fun on(columnName: String) = on(tableName, columnName)
+
+        fun on(tableName: String, columnName: String) {
+            joins += SelectBuilder.Join(
+                joinColumn,
+                Column(columnName, joinColumn.dialect, tableName),
+                joinMode
+            )
+        }
+    }
 }

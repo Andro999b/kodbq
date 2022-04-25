@@ -5,17 +5,19 @@ class Column(
     val dialect: SqlDialect,
     val table: String? = null,
     val alias: String? = null
-) {
-    fun escapeName()  = if(name == "*") "*" else dialect.escape(name)
+): Named {
     fun escapeTable() = table?.let { dialect.escape(table) }
 
-    override fun toString(): String {
+    override fun escapeName(): String {
+        val name = if(name == "*") "*" else dialect.escape(name)
         return if(table != null) {
-            "${dialect.escape(table)}.${escapeName()}"
+            "${dialect.escape(table)}.$name"
         } else {
-            escapeName()
+            name
         }
     }
+
+    override fun toString() = escapeName()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

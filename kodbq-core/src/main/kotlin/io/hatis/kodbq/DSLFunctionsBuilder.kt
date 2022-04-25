@@ -2,7 +2,7 @@ package io.hatis.kodbq
 
 open class DSLFunctionsBuilder(
     protected val dialect: SqlDialect,
-    protected val tableName: String? = null,
+    protected val tableName: String,
     protected val functions: MutableMap<String, Function> = mutableMapOf(),
 ) {
     fun count(alias: String) = function("count", "*", alias)
