@@ -17,7 +17,7 @@ fun selectByUserId(userId: Long) = sqlSelect("users") {
     where { id(userId) }
 }
 
-fun selectByUserIds(userId: Collection<Long>) = sqlSelect("users") {
+fun selectByUserIds(userId: List<Long>) = sqlSelect("users") {
     where { columns("id" to userId) }
 }
 
@@ -72,10 +72,10 @@ fun selectOrderUntil(time: OffsetDateTime) = sqlSelect("orders") {
 
 fun selectUserOrders(userId: Long) = sqlSelect("orders") {
     returns {
-        columns("id" to "orderId")
+        columns("id" to "orderid")
         table("users") {
             column("name")
-            column("id", "userId")
+            column("id", "userid")
         }
     }
     join("users", "id") on "user_id"
@@ -84,11 +84,11 @@ fun selectUserOrders(userId: Long) = sqlSelect("orders") {
 
 fun selectUsersOrdersFrom(from: OffsetDateTime) = sqlSelect("orders") {
     returns {
-        columns("id" to "orderId")
+        columns("id" to "orderid")
         columns(setOf("article", "price"))
         table("users") {
             column("name")
-            column("id", "userId")
+            column("id", "userid")
         }
         table("order_status") {
             column("status", "order_status")
@@ -97,8 +97,8 @@ fun selectUsersOrdersFrom(from: OffsetDateTime) = sqlSelect("orders") {
     join("users", "id") on "user_id"
     join("order_status", "order_id").on("orders", "id")
     where {
-        column("created") eq from
-        table("users") { column("deleted").notNull() }
+        column("created") gte from
+        table("users") { column("deleted").isNull() }
     }
 }
 
@@ -107,8 +107,19 @@ fun selectUsersOrdersCount() = sqlSelect("users") {
         column("name")
         table("orders") { count("count") }
     }
-    join("orders", "user_id") on "id"
-    groupBy("id")
+    rightJoin("orders", "user_id") on "id"
+    groupBy("id", "name")
+    sort("id")
+}
+
+fun selectUsersAvgOrderPrice() = sqlSelect("users") {
+    returns {
+        column("name")
+        table("orders") { avg("price", "avg_price")}
+    }
+    rightJoin("orders", "user_id") on "id"
+    groupBy("id","name")
+    sort("id")
 }
 
 fun selectUsersSortedByAgeAndCreated() = sqlSelect("users") {
@@ -131,7 +142,7 @@ fun selectUsersWithAgeInRanges(ranges: Collection<IntRange>) = sqlSelect("users"
     }
 }
 
-fun insertOrders(orders: Collection<TestOrder>) = sqlInsert("orders") {
+fun insertOrders(orders: Collection<TestOrder>, returnIds: Boolean = true) = sqlInsert("orders") {
     orders.forEach {
         values {
             column("user_id", it.userId)
@@ -142,7 +153,7 @@ fun insertOrders(orders: Collection<TestOrder>) = sqlInsert("orders") {
             native("created") { "now()" }
         }
     }
-    generatedKeys("id")
+    if(returnIds) generatedKeys("id")
 }
 
 fun updateOrder(orderId: Long, article: String, price: Double) = sqlUpdate("orders") {

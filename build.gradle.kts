@@ -7,10 +7,14 @@ repositories {
     mavenCentral()
 }
 
+val testcontainersVersion = "1.16.3"
 val releaseVersion = "1.0.0"
+
 version = releaseVersion
 
 subprojects {
+    val isNotTestKit = !name.contains("test")
+
     apply { plugin("kotlin") }
     apply { plugin("maven-publish") }
 
@@ -32,18 +36,8 @@ subprojects {
         kotlinOptions.javaParameters = true
     }
 
-    if(!name.contains("test")) { // exclude test project
+    if(isNotTestKit) { // exclude test project
         publishing {
-//        repositories {
-//            maven {
-//                name = "GitHubPackages"
-//                url = uri("https://maven.pkg.github.com/Andro999b/kotlin-database-utils")
-//                credentials {
-//                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITPKG_USER")
-//                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITPKG_TOKEN")
-//                }
-//            }
-//        }
             publications {
                 register<MavenPublication>("gpr") {
                     from(components["java"])
@@ -54,6 +48,7 @@ subprojects {
 
     dependencies {
         implementation("org.jetbrains.kotlin:kotlin-stdlib")
+        implementation(platform("org.testcontainers:testcontainers-bom:$testcontainersVersion"))
     }
 }
 

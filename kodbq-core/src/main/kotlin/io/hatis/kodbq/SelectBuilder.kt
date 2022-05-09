@@ -10,7 +10,7 @@ class SelectBuilder(
     val returns: Returns,
     val groupByColumns: Set<Column> = emptySet(),
     val dialect: SqlDialect
-) : SqlBuilder {
+) : AbstractSqlBuilder() {
     data class Sort(val column: Column, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
 
@@ -49,15 +49,15 @@ class SelectBuilder(
                     append(joinMode.sql)
                 }
                 append(" join ")
-                append(joinTableColumn.escapeTable())
+                append(joinTableColumn.escapeTable)
                 append(" on ")
                 append(joinTableColumn)
-                append(" = ")
+                append("=")
                 append(onColumn)
             }
 
             where?.let {
-                val whereString = buildWhere(it, params, paramPlaceholder)
+                val whereString = WhereBuilder(buildOptions, paramPlaceholder, params).build(it)
                 if (whereString.isNotEmpty()) {
                     append(" where ")
                     append(whereString)
@@ -75,11 +75,13 @@ class SelectBuilder(
             }
 
             limit?.let {
-                append(" offset ")
-                append(it.offset)
                 if (it.count > 0) {
                     append(" limit ")
                     append(it.count)
+                }
+                if(it.offset > 0) {
+                    append(" offset ")
+                    append(it.offset)
                 }
             }
         }
@@ -88,7 +90,10 @@ class SelectBuilder(
     }
 
     private fun columnToReturnField(c: Column): String =
-        if (c.alias != null) "$c as ${c.alias}" else c.toString()
+        if (c.alias != null)
+            "$c as ${c.alias}"
+        else
+            c.toString()
 
     private fun getFunctions(params: MutableList<Any?>, paramPlaceholder: (Int) -> String): Collection<String> =
         returns.functions.entries.mapNotNull { (alias, f) ->

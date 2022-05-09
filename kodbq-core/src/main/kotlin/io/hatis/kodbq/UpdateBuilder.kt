@@ -5,15 +5,16 @@ class UpdateBuilder(
     val columns: Map<Column, Any?>,
     val where: WherePart?,
     val dialect: SqlDialect
-): SqlBuilder {
+): AbstractSqlBuilder() {
     private fun buildParams(outParams: MutableList<Any?>, paramPlaceholder: (Int) -> String) =
         columns.entries.mapNotNull { (key, value) ->
             if (value is NativeSqlColumn) {
-                value.generate(
+                val sql = value.generate(
                     NativeSqlColumn.Usage.UPDATE,
                     outParams = outParams,
                     paramPlaceholder = paramPlaceholder
                 )
+                "$key=$sql"
             } else {
                 outParams.add(value)
                 "$key=${paramPlaceholder(outParams.size)}"
@@ -29,7 +30,8 @@ class UpdateBuilder(
         var sql = "update ${dialect.escape(tableName)} set " + buildParams(params, paramPlaceholder)
 
         where?.let {
-            sql += " where ${buildWhere(it, whereParams, paramPlaceholder, params.size)}"
+            val wherePart = WhereBuilder(buildOptions, paramPlaceholder, whereParams, params.size).build(it)
+            sql += " where $wherePart"
         }
 
         return sql to (params + whereParams)

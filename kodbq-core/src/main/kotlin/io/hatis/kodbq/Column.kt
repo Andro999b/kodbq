@@ -6,18 +6,20 @@ class Column(
     val table: String? = null,
     val alias: String? = null
 ): Named {
-    fun escapeTable() = table?.let { dialect.escape(table) }
+    val isStar = name == "*"
+    val escapeTable = table?.let { dialect.escape(table) }
 
-    override fun escapeName(): String {
-        val name = if(name == "*") "*" else dialect.escape(name)
-        return if(table != null) {
-            "${dialect.escape(table)}.$name"
-        } else {
-            name
+    override val escapeName: String
+        get() {
+            val name = if (isStar) return "*" else dialect.escape(name)
+            return if (table != null) {
+                "${dialect.escape(table)}.$name"
+            } else {
+                name
+            }
         }
-    }
 
-    override fun toString() = escapeName()
+    override fun toString() = escapeName
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
