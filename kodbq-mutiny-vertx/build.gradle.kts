@@ -8,7 +8,16 @@ dependencies {
     //pg test
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.postgresql:postgresql:42.3.4")
-    testImplementation("io.smallrye.reactive:smallrye-mutiny-vertx-jdbc-client:$mutinySqlVertexVersion")
+
+    api("io.smallrye.reactive:smallrye-mutiny-vertx-pg-client:$mutinySqlVertexVersion")
+}
+
+sourceSets {
+    test {
+        resources {
+            srcDir("../sql")
+        }
+    }
 }
 
 tasks.withType<Test> {

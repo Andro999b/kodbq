@@ -1,4 +1,4 @@
-package io.hatis.kodbq.spring.r2dbc
+package io.hatis.kodbq
 
 data class InsertResult(
     val affectedRows: Int,

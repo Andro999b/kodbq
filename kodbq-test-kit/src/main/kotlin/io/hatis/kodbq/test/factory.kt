@@ -9,7 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import java.time.OffsetDateTime
 
-typealias ExecuteAndGetFun = SqlBuilder.() -> List<Map<String, Any?>>
+typealias ExecuteAndGetFun = SqlBuilder.() -> List<Map<String, Any>>
 
 fun selectsTestFactory(execute: ExecuteAndGetFun) = stringSpec {
     "select all" {
@@ -139,33 +139,36 @@ fun selectsTestFactory(execute: ExecuteAndGetFun) = stringSpec {
 }
 
 fun updateTestFactory(execute: ExecuteAndGetFun) = stringSpec {
-    "insert orders and return ids" {
-        val orders = listOf(
-            TestOrder(article = "carrot", userId = 1, price = 10.0),
-            TestOrder(article = "potato", userId = 2, price = 5.0),
-        )
-        val result = insertOrders(orders).execute()
-        result.first()["affectedRows"] shouldBe 2
-    }
     "insert orders" {
+        val userId = 6L
         val orders = listOf(
-            TestOrder(article = "wheat", userId = 1, price = 1.0)
+            TestOrder(article = "wheat", userId = userId, price = 1.0),
+            TestOrder(article = "carrot", userId = userId, price = 10.0),
+            TestOrder(article = "potato", userId = userId, price = 5.0)
         )
         insertOrders(orders, false).execute()
+        val result = selectUserOrders(userId).execute()
+        result.size shouldBe orders.size
+        result.map { it["orderid"] } shouldBe listOf(100, 101, 102)
     }
     "change order article" {
         val orderId = 6L
         val article = "onion"
         val price = 20.0
-        val result = updateOrder(orderId, article, price).execute()
+        var result = updateOrder(orderId, article, price).execute()
         result.size shouldBe 1
         result.first()["affectedRows"] shouldBe 1
+        result = selectOrderById(orderId).execute()
+        result.first()["article"] shouldBe article
+        result.first()["price"] shouldBe price
     }
     "delete order" {
         val orderId = 100L
-        val result = deleteOrder(orderId).execute()
+        var result = deleteOrder(orderId).execute()
         result.size shouldBe 1
         result.first()["affectedRows"] shouldBe 1
+        result = selectOrderById(orderId).execute()
+        result.size shouldBe 0
     }
     "delete orders created in date range" {
         val ranges = listOf(OffsetDateTime.now().minusDays(1) to OffsetDateTime.now().plusDays(1))

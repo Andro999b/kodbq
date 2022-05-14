@@ -1,7 +1,11 @@
 rootProject.name = "kodbq"
 include("kodbq-core")
 include("kodbq-test-kit")
+include("kodbq-vertx")
+include("kodbq-vertx-jdbc")
+include("kodbq-mutiny-vertx-jdbc")
 include("kodbq-mutiny-vertx")
+include("kodbq-jdbc")
 include("kodbq-fluent-jdbc")
 include("kodbq-spring-jdbc")
 include("kodbq-spring-r2dbc")

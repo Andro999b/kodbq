@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 
 
 fun SqlBuilder.expectSqlAndParams(sql: String, params: List<Any?> = emptyList()) {
-    val (actualSql, actualParams) = buildSqlAndParams { "?" }
+    val (actualSql, actualParams) = buildSqlAndParams()
 
     actualSql shouldBe sql
     actualParams shouldBe params

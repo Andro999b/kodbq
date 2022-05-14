@@ -1,7 +1,7 @@
 package io.hatis.kodbq
 
 class NativeSql(
-    private val dialect: SqlDialect,
+    val dialect: SqlDialect,
     private val generateFun: Generator.() -> String
 ) {
     fun generate(

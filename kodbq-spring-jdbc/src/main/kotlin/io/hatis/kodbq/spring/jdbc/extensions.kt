@@ -63,13 +63,10 @@ private fun <T> query(template: JdbcTemplate, mapper: RowMapper<T>, sqlAndParams
     return template.query(sql, mapper, *params.toTypedArray())
 }
 
-@Suppress("UNUSED_PARAMETER")
-private fun paramPlaceholder(index: Int) = "?"
+fun UpdateBuilder.execute(template: JdbcTemplate) = update(template, buildSqlAndParams())
+fun InsertBuilder.execute(template: JdbcTemplate) = insert(template, buildSqlAndParams(), generatedKeys)
 
-fun UpdateBuilder.execute(template: JdbcTemplate) = update(template, buildSqlAndParams(::paramPlaceholder))
-fun InsertBuilder.execute(template: JdbcTemplate) = insert(template, buildSqlAndParams(::paramPlaceholder), generatedKeys)
-
-fun <T> SelectBuilder.execute(template: JdbcTemplate, mapper: RowMapper<T>) = query(template, mapper, buildSqlAndParams(::paramPlaceholder))
-fun DeleteBuilder.execute(template: JdbcTemplate) = update(template, buildSqlAndParams(::paramPlaceholder))
-fun QueryBuilder.update(template: JdbcTemplate) = update(template, buildSqlAndParams(::paramPlaceholder))
-fun <T> QueryBuilder.query(template: JdbcTemplate, mapper: RowMapper<T>) = query(template, mapper, buildSqlAndParams(::paramPlaceholder))
+fun <T> SelectBuilder.execute(template: JdbcTemplate, mapper: RowMapper<T>) = query(template, mapper, buildSqlAndParams())
+fun DeleteBuilder.execute(template: JdbcTemplate) = update(template, buildSqlAndParams())
+fun QueryBuilder.executeUpdate(template: JdbcTemplate) = update(template, buildSqlAndParams())
+fun <T> QueryBuilder.execute(template: JdbcTemplate, mapper: RowMapper<T>) = query(template, mapper, buildSqlAndParams())

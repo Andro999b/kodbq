@@ -70,6 +70,8 @@ fun selectOrderUntil(time: OffsetDateTime) = sqlSelect("orders") {
     }
 }
 
+fun selectOrderById(id: Long) = sqlSelect("orders") { where { id(id) } }
+
 fun selectUserOrders(userId: Long) = sqlSelect("orders") {
     returns {
         columns("id" to "orderid")

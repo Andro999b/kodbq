@@ -31,24 +31,13 @@ private fun select(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<Any?>
         .params(params)
 }
 
-@Suppress("UNUSED_PARAMETER")
-private fun paramPlaceholder(index: Int) = "?"
-fun UpdateBuilder.build(fluentJdbc: FluentJdbc) =
-    update(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
-
+fun UpdateBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams())
 fun UpdateBuilder.execute(fluentJdbc: FluentJdbc): UpdateResult = build(fluentJdbc).run()
-
-fun InsertBuilder.build(fluentJdbc: FluentJdbc) = batch(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
+fun InsertBuilder.build(fluentJdbc: FluentJdbc) = batch(fluentJdbc, buildSqlAndParams())
 fun InsertBuilder.execute(fluentJdbc: FluentJdbc): Collection<UpdateResult> = build(fluentJdbc).run()
-
-fun SelectBuilder.build(fluentJdbc: FluentJdbc) =
-    select(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
-
-fun DeleteBuilder.build(fluentJdbc: FluentJdbc) =
-    update(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
-
+fun SelectBuilder.build(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams())
+fun DeleteBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams())
 fun DeleteBuilder.execute(fluentJdbc: FluentJdbc): UpdateResult = build(fluentJdbc).run()
-
-fun QueryBuilder.buildSelect(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
-fun QueryBuilder.buildUpdate(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams(::paramPlaceholder))
+fun QueryBuilder.build(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams())
+fun QueryBuilder.buildUpdate(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams())
 fun QueryBuilder.executeUpdate(fluentJdbc: FluentJdbc): UpdateResult = buildUpdate(fluentJdbc).run()

@@ -1,5 +1,7 @@
 package io.hatis.kodbq
 
 interface SqlBuilder {
-    fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>>
+    val dialect: SqlDialect
+    var buildOptions: BuildOptions
+    fun buildSqlAndParams(): Pair<String, List<Any?>>
 }

@@ -19,33 +19,26 @@ private fun batch(
     return databaseClient.inConnection { connection ->
         var statement = connection.createStatement(sql)
 
-        if(generatedKeys.isNotEmpty() && dialect != SqlDialect.PG) {
+        if (generatedKeys.isNotEmpty() && dialect != SqlDialect.PG) {
             statement = statement.returnGeneratedValues(*generatedKeys.toTypedArray())
         }
 
         params.forEach { statement = statement.bindParams(it).add() }
 
+        //R2DBC suck with batch
         Flux.from(statement.execute())
             .flatMap {
-                Flux.zip(
-                    it.rowsUpdated,
-                    it.map { row, _ ->
-                        val m = mutableMapOf<String, Any>()
-                        generatedKeys.forEach { key ->
-                            val value = row.get(key)
-                            if(value != null) m[key] = value
-                        }
-                        return@map m
+                it.map { row, _ ->
+                    val m = mutableMapOf<String, Any>()
+                    generatedKeys.forEach { key ->
+                        val value = row.get(key)
+                        if (value != null) m[key] = value
                     }
-                )
+                    return@map m
+                }
             }
             .collectList()
-            .map { tuples ->
-                InsertResult(
-                    tuples.sumOf { it.t1 },
-                    tuples.map { it.t2 }.toList()
-                )
-            }
+            .map { InsertResult(it.size, it) }
     }
 }
 
@@ -80,13 +73,19 @@ private fun Statement.bindParams(params: List<Any?>): Statement {
     return this
 }
 
-private fun paramPlaceholder(index: Int) = "\$$index"
+private val r2dbcBuildOptions = defaultBuildOptions.copy(paramPlaceholder = { "\$$it" })
 
-fun SqlBuilder.execute(databaseClient: DatabaseClient) = query(databaseClient, buildSqlAndParams(::paramPlaceholder))
-fun InsertBuilder.execute(databaseClient: DatabaseClient) =
-    batch(
+fun SqlBuilder.execute(databaseClient: DatabaseClient): FetchSpec<MutableMap<String, Any>> {
+    buildOptions = r2dbcBuildOptions
+    return query(databaseClient, buildSqlAndParams())
+}
+
+fun InsertBuilder.execute(databaseClient: DatabaseClient): Mono<InsertResult> {
+    buildOptions = r2dbcBuildOptions
+    return batch(
         databaseClient,
-        buildSqlAndParams(::paramPlaceholder),
+        buildSqlAndParams(),
         generatedKeys,
         dialect
     )
+}

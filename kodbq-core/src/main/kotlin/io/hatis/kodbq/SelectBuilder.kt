@@ -9,7 +9,7 @@ class SelectBuilder(
     val distinct: Boolean = false,
     val returns: Returns,
     val groupByColumns: Set<Column> = emptySet(),
-    val dialect: SqlDialect
+    override val dialect: SqlDialect
 ) : AbstractSqlBuilder() {
     data class Sort(val column: Column, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
@@ -26,13 +26,13 @@ class SelectBuilder(
         val functions: Map<String, Function> = emptyMap()
     )
 
-    override fun buildSqlAndParams(paramPlaceholder: (Int) -> String): Pair<String, List<Any?>> {
+    override fun buildSqlAndParams(): Pair<String, List<Any?>> {
         val escape = dialect.escape
         val params = mutableListOf<Any?>()
         val sql = buildString {
             if (distinct) append("select distinct ") else append("select ")
             val allColumns = returns.columns + groupByColumns
-            val allColumnNames = allColumns.map { columnToReturnField(it) } + getFunctions(params, paramPlaceholder)
+            val allColumnNames = allColumns.map { columnToReturnField(it) } + getFunctions(params)
 
             if (allColumnNames.isEmpty()) {
                 append("*")
@@ -57,7 +57,7 @@ class SelectBuilder(
             }
 
             where?.let {
-                val whereString = WhereBuilder(buildOptions, paramPlaceholder, params).build(it)
+                val whereString = WhereBuilder(buildOptions, buildOptions.paramPlaceholder, params).build(it)
                 if (whereString.isNotEmpty()) {
                     append(" where ")
                     append(whereString)
@@ -95,13 +95,13 @@ class SelectBuilder(
         else
             c.toString()
 
-    private fun getFunctions(params: MutableList<Any?>, paramPlaceholder: (Int) -> String): Collection<String> =
+    private fun getFunctions(params: MutableList<Any?>): Collection<String> =
         returns.functions.entries.mapNotNull { (alias, f) ->
             when (f) {
                 is NativeFunction -> {
                     val functionSql = f.nativeSqlColumn.generate(
                         outParams = params,
-                        paramPlaceholder = paramPlaceholder
+                        paramPlaceholder = buildOptions.paramPlaceholder
                     )
                     "$functionSql as $alias"
                 }
