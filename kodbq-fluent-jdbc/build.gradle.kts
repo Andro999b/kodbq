@@ -1,3 +1,8 @@
+plugins {
+    id("kodbq-testing")
+    id("kodbq-publish")
+}
+
 val fluentjdbcVersion = "1.8.5"
 
 dependencies {
@@ -9,11 +14,7 @@ dependencies {
     // pg test
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.postgresql:postgresql:42.3.4")
-
-    testImplementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+
 

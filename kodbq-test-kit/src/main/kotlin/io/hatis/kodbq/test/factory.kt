@@ -146,7 +146,7 @@ fun updateTestFactory(execute: ExecuteAndGetFun) = stringSpec {
             TestOrder(article = "carrot", userId = userId, price = 10.0),
             TestOrder(article = "potato", userId = userId, price = 5.0)
         )
-        insertOrders(orders, false).execute()
+        insertOrders(orders).execute()
         val result = selectUserOrders(userId).execute()
         result.size shouldBe orders.size
         result.map { it["orderid"] } shouldBe listOf(100, 101, 102)

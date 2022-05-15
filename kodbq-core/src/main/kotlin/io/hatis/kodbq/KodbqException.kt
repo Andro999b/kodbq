@@ -1,3 +1,6 @@
 package io.hatis.kodbq
 
-class KodbqException(cause: Throwable): RuntimeException(cause)
+class KodbqException: RuntimeException {
+    constructor(cause: Throwable): super(cause)
+    constructor(msg: String): super(msg)
+}

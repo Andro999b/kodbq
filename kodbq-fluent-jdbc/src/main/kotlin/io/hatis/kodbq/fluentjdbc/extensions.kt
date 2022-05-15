@@ -33,7 +33,10 @@ private fun select(fluentJdbc: FluentJdbc, sqlAndParams: Pair<String, List<Any?>
 
 fun UpdateBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams())
 fun UpdateBuilder.execute(fluentJdbc: FluentJdbc): UpdateResult = build(fluentJdbc).run()
-fun InsertBuilder.build(fluentJdbc: FluentJdbc) = batch(fluentJdbc, buildSqlAndParams())
+fun InsertBuilder.build(fluentJdbc: FluentJdbc): BatchQuery {
+    buildOptions = buildOptions.copy(generatedKeysSql = false)
+    return batch(fluentJdbc, buildSqlAndParams())
+}
 fun InsertBuilder.execute(fluentJdbc: FluentJdbc): Collection<UpdateResult> = build(fluentJdbc).run()
 fun SelectBuilder.build(fluentJdbc: FluentJdbc) = select(fluentJdbc, buildSqlAndParams())
 fun DeleteBuilder.build(fluentJdbc: FluentJdbc) = update(fluentJdbc, buildSqlAndParams())

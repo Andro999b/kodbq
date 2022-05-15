@@ -25,4 +25,7 @@ private fun executeInsert(sqlClient: SqlClient, sqlAndParams: Pair<String, List<
 }
 
 fun SqlBuilder.execute(client: SqlClient) = execute(client, buildSqlAndParams())
-fun InsertBuilder.execute(client: SqlClient) = executeInsert(client, buildSqlAndParams())
+fun InsertBuilder.execute(client: SqlClient): Uni<RowSet<Row>> {
+    buildOptions = buildOptions.copy(generatedKeysSql = false)
+    return executeInsert(client, buildSqlAndParams())
+}

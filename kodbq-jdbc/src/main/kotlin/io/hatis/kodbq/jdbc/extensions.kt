@@ -26,14 +26,15 @@ fun executeUpdate(connection: Connection, sqlAndParams: Pair<String, List<Any?>>
 fun executeBatch(
     connection: Connection,
     sqlAndParams: Pair<String, List<List<Any?>>>,
-    generatedKeys: Set<String>
+    generatedKeys: Set<String>,
+    dialect: SqlDialect
 ): InsertResult {
     val (sql, params) = sqlAndParams
 
     var generatedKeysResult: List<Map<String, Any>> = emptyList()
     var affectedRows = 0
 
-    val prepareStatement = if (generatedKeys.isNotEmpty())
+    val prepareStatement = if (dialect != SqlDialect.MS_SQL && generatedKeys.isNotEmpty())
         connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     else
         connection.prepareStatement(sql)
@@ -45,7 +46,8 @@ fun executeBatch(
         }
 
         affectedRows = statement.executeBatch().sum()
-        if (generatedKeys.isNotEmpty()) {
+        // Sql Server drive does not support executeBatch + generatedKeys: https://github.com/Microsoft/mssql-jdbc/issues/245
+        if (dialect != SqlDialect.MS_SQL && generatedKeys.isNotEmpty()) {
             statement.generatedKeys?.let { rs ->
                 generatedKeysResult = rs.use {
                     resultSetToMap(rs)
@@ -84,7 +86,10 @@ fun UpdateBuilder.execute(dataSource: DataSource) = dataSource.connection.use { 
 fun DeleteBuilder.execute(connection: Connection) = executeUpdate(connection, buildSqlAndParams())
 fun DeleteBuilder.execute(dataSource: DataSource) = dataSource.connection.use { execute(it) }
 
-fun InsertBuilder.execute(connection: Connection) = executeBatch(connection, buildSqlAndParams(), generatedKeys)
+fun InsertBuilder.execute(connection: Connection): InsertResult {
+    buildOptions = buildOptions.copy(generatedKeysSql = false)
+    return executeBatch(connection, buildSqlAndParams(), generatedKeys, dialect)
+}
 fun InsertBuilder.execute(dataSource: DataSource) = dataSource.connection.use { execute(it) }
 
 fun <T> QueryBuilder.execute(connection: Connection, mapper: (rs: ResultSet) -> T) = execute(connection, buildSqlAndParams(), mapper)

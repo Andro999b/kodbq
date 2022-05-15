@@ -47,8 +47,10 @@ fun SqlBuilder.execute(sqlClient: SqlClient): Future<RowSet<Row>> {
     return execute(sqlClient, buildSqlAndParams())
 }
 fun InsertBuilder.execute(sqlClient: SqlClient, handler: Handler<AsyncResult<RowSet<Row>>>) {
+    buildOptions = buildOptions.copy(generatedKeysSql = false)
     executeBatch(sqlClient, buildSqlAndParams(), handler)
 }
 fun InsertBuilder.execute(sqlClient: SqlClient): Future<RowSet<Row>> {
+    buildOptions = buildOptions.copy(generatedKeysSql = false)
     return executeBatch(sqlClient, buildSqlAndParams())
 }

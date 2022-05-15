@@ -44,10 +44,10 @@ abstract class SpringR2dbcTest(
 
                 listOf(mapOf("affectedRows" to insetResult!!.affectedRows))
             }
-            is AbstractSqlBuilder -> {
+            is UpdateBuilder, is DeleteBuilder -> {
                 val affectedRows = execute(databaseClient)
                     .rowsUpdated()
-                    .block()
+                    .block()!!
 
                 listOf(mapOf("affectedRows" to affectedRows))
             }

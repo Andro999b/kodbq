@@ -1,3 +1,8 @@
+plugins {
+    id("kodbq-testing")
+    id("kodbq-publish")
+}
+
 dependencies {
     api(project(":kodbq-core"))
 
@@ -6,10 +11,7 @@ dependencies {
     // pg test
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.postgresql:postgresql:42.3.4")
-
-    testImplementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+    //mssql test
+    testImplementation("org.testcontainers:mssqlserver")
+    testImplementation("com.microsoft.sqlserver:mssql-jdbc:9.4.1.jre11")
 }

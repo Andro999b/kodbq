@@ -1,4 +1,4 @@
-package io.hatis.kodbq.vertx.jdbc
+package io.hatis.kodbq.vertx
 
 import io.hatis.kodbq.InsertBuilder
 import io.hatis.kodbq.SqlBuilder

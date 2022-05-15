@@ -74,14 +74,31 @@ class SelectBuilder(
                 appendWithDelimiter(sort.map { "${it.column}${if (it.asc) "" else " desc"}" })
             }
 
+
             limit?.let {
-                if (it.count > 0) {
-                    append(" limit ")
-                    append(it.count)
-                }
-                if(it.offset > 0) {
-                    append(" offset ")
-                    append(it.offset)
+                if (dialect != SqlDialect.MS_SQL) {
+                    if (it.count > 0) {
+                        append(" limit ")
+                        append(it.count)
+                    }
+                    if (it.offset > 0) {
+                        append(" offset ")
+                        append(it.offset)
+                    }
+                } else {
+                    if (sort.isEmpty()) {
+                        throw KodbqException("Cant use limit/offset without sort in MS_SQL")
+                    }
+                    if(it.count > 0 || it.offset > 0) {
+                        append(" offset ")
+                        append(it.offset)
+                        append(" rows")
+                        if (it.count > 0) {
+                            append(" fetch next ")
+                            append(it.count)
+                            append(" rows only")
+                        }
+                    }
                 }
             }
         }

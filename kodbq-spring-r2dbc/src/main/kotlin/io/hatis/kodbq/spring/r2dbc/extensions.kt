@@ -19,7 +19,7 @@ private fun batch(
     return databaseClient.inConnection { connection ->
         var statement = connection.createStatement(sql)
 
-        if (generatedKeys.isNotEmpty() && dialect != SqlDialect.PG) {
+        if (generatedKeys.isNotEmpty()) {
             statement = statement.returnGeneratedValues(*generatedKeys.toTypedArray())
         }
 
@@ -73,7 +73,10 @@ private fun Statement.bindParams(params: List<Any?>): Statement {
     return this
 }
 
-private val r2dbcBuildOptions = defaultBuildOptions.copy(paramPlaceholder = { "\$$it" })
+private val r2dbcBuildOptions = defaultBuildOptions.copy(
+    generatedKeysSql = false,
+    paramPlaceholder = { "\$$it" }
+)
 
 fun SqlBuilder.execute(databaseClient: DatabaseClient): FetchSpec<MutableMap<String, Any>> {
     buildOptions = r2dbcBuildOptions

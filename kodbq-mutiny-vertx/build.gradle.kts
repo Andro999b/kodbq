@@ -1,3 +1,8 @@
+plugins {
+    id("kodbq-testing")
+    id("kodbq-publish")
+}
+
 val mutinySqlVertexVersion = "2.21.0"
 
 dependencies {
@@ -10,16 +15,4 @@ dependencies {
     testImplementation("org.postgresql:postgresql:42.3.4")
 
     api("io.smallrye.reactive:smallrye-mutiny-vertx-pg-client:$mutinySqlVertexVersion")
-}
-
-sourceSets {
-    test {
-        resources {
-            srcDir("../sql")
-        }
-    }
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
 }

@@ -1,11 +1,10 @@
-package io.hatis.kodbq.vertx.jdbc
+package io.hatis.kodbq.vertx
 
 import io.hatis.kodbq.*
 import io.hatis.kodbq.test.ExecuteAndGetFun
 import io.hatis.kodbq.test.selectsTestFactory
 import io.hatis.kodbq.test.updateTestFactory
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
 import io.vertx.core.Vertx
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.SqlClient
@@ -17,8 +16,8 @@ abstract class VertxTest(
     clientFactory: (vertx: Vertx, container: JdbcDatabaseContainer<*>) -> SqlClient
 ) : StringSpec({
     container.start()
-    val vetrx = Vertx.vertx()
-    val client = clientFactory(vetrx, container)
+    val vertx = Vertx.vertx()
+    val client = clientFactory(vertx, container)
 
     val execute: ExecuteAndGetFun = {
         when (this) {

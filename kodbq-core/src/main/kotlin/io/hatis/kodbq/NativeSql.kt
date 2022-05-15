@@ -11,7 +11,7 @@ class NativeSql(
     )  = Generator(dialect, outParams, paramOffset, paramPlaceholder).generateFun()
 
     class Generator(
-        private val dialect: SqlDialect,
+        val dialect: SqlDialect,
         private val outParams: MutableList<Any?>,
         private val paramOffset: Int = 0,
         private val paramPlaceholder: (Int) -> String

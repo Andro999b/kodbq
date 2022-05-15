@@ -31,11 +31,21 @@ class TestSelect : StringSpec({
     }
     "select with offset" {
         selectUsersWithOffset(100, 10)
-            .expectSqlAndParams("select * from \"users\" limit 10 offset 100")
+            .expectSqlAndParams("select * from \"users\" order by \"users\".\"id\" limit 10 offset 100")
+    }
+    "select with offset for MS_SQL" {
+        kodbqDialect = SqlDialect.MS_SQL
+        selectUsersWithOffset(100, 0)
+            .expectSqlAndParams("select * from [users] order by [users].[id] offset 100 rows")
+    }
+    "select with offset and limit for MS_SQL" {
+        kodbqDialect = SqlDialect.MS_SQL
+        selectUsersWithOffset(100, 10)
+            .expectSqlAndParams("select * from [users] order by [users].[id] offset 100 rows fetch next 10 rows only")
     }
     "select with range" {
         selectUsersInRange(100, 110)
-            .expectSqlAndParams("select * from \"users\" limit 10 offset 100")
+            .expectSqlAndParams("select * from \"users\" order by \"users\".\"id\" limit 10 offset 100")
     }
     "select users age between" {
         selectUserAgeBetween(18, 25)

@@ -6,7 +6,6 @@ import io.hatis.kodbq.test.selectsTestFactory
 import io.hatis.kodbq.test.updateTestFactory
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.inspectors.forAtLeastOne
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import org.apache.commons.dbcp2.BasicDataSource
 import org.codejargon.fluentjdbc.api.FluentJdbcBuilder

@@ -22,11 +22,13 @@ fun selectByUserIds(userId: List<Long>) = sqlSelect("users") {
 }
 
 fun selectUsersWithOffset(offset: Int, limit: Int) = sqlSelect("users") {
+    sort("id")
     offset(offset)
     limit(limit)
 }
 
 fun selectUsersInRange(from: Int, to: Int) = sqlSelect("users") {
+    sort("id")
     range(from, to)
 }
 
@@ -152,7 +154,7 @@ fun insertOrders(orders: Collection<TestOrder>, returnIds: Boolean = true) = sql
                 "article" to it.article,
                 "price" to it.price
             ))
-            native("created") { "now()" }
+            native("created") { if(dialect == SqlDialect.MS_SQL) "getdate()" else "now()" }
         }
     }
     if(returnIds) generatedKeys("id")

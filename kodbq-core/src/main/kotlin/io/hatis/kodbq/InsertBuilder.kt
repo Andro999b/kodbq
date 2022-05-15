@@ -46,13 +46,20 @@ class InsertBuilder(
         val firstRow = valuesItr.next()
         val firstParams = mutableListOf<Any?>()
         val keyValues = buildColumnsAndValue(firstParams, firstRow.entries)
-        var sql = "insert into ${dialect.escape(tableName)}(${keyValues.joinToString(",") { it.first.toString() }}) " +
-                "values(${keyValues.joinToString(",") { it.second.toString() }})"
+        var sql = "insert into ${dialect.escape(tableName)}(${keyValues.joinToString(",") { it.first.toString() }})"
+
+        if (buildOptions.generatedKeysSql && generatedKeys.isNotEmpty()) {
+            if (dialect == SqlDialect.MS_SQL) {
+                sql += " output ${generatedKeys.joinToString(",") { "inserted.${dialect.escape(it)}" }}"
+            }
+        }
+
+        sql += " values(${keyValues.joinToString(",") { it.second.toString() }})"
 
         val params = mutableListOf<List<Any?>>()
         params += firstParams
 
-        if (generatedKeys.isNotEmpty()) {
+        if (buildOptions.generatedKeysSql && generatedKeys.isNotEmpty()) {
             if (dialect == SqlDialect.PG) {
                 sql += " returning ${generatedKeys.joinToString(",", transform = dialect.escape)}"
             }

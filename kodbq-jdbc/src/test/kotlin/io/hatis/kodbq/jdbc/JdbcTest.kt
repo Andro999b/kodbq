@@ -6,6 +6,7 @@ import io.hatis.kodbq.test.selectsTestFactory
 import io.hatis.kodbq.test.updateTestFactory
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.inspectors.forAtLeastOne
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import org.apache.commons.dbcp2.BasicDataSource
 
@@ -19,9 +20,9 @@ abstract class JdbcTest(url: String, sqlDialect: SqlDialect): StringSpec({
             is SelectBuilder -> execute(dataSource, ::resultSetToMap)
             is InsertBuilder -> {
                 val result = execute(dataSource)
-                if(generatedKeys.isNotEmpty()) {
-                    result.generatedKeys.forAtLeastOne {
-                        it.keys.size shouldBe generatedKeys.size
+                if(dialect != SqlDialect.MS_SQL && generatedKeys.isNotEmpty()) {
+                    result.generatedKeys.forAtLeastOne { map ->
+                        should { map.keys.containsAll(generatedKeys) }
                     }
                 }
                 listOf(mapOf("affectedRows" to result.affectedRows))
