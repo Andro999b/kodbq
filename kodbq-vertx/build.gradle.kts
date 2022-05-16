@@ -3,7 +3,7 @@ plugins {
     id("kodbq-publish")
 }
 
-val vertxVersion = "4.3.0"
+val vertxVersion = "4.2.7"
 
 dependencies {
     api(project(":kodbq-core"))
@@ -19,5 +19,9 @@ dependencies {
     testImplementation("org.testcontainers:mysql")
     testImplementation("mysql:mysql-connector-java:8.0.29")
     testImplementation("io.vertx:vertx-mysql-client:$vertxVersion")
+    //mysql test
+    testImplementation("org.testcontainers:mssqlserver")
+    testImplementation("com.microsoft.sqlserver:mssql-jdbc:9.4.1.jre11")
+    testImplementation("io.vertx:vertx-mssql-client:$vertxVersion")
 
 }

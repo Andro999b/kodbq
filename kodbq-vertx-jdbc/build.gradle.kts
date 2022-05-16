@@ -3,7 +3,7 @@ plugins {
     id("kodbq-publish")
 }
 
-val vertxVersion = "4.3.0"
+val vertxVersion = "4.2.7"
 
 dependencies {
     api(project(":kodbq-core"))

@@ -3,15 +3,13 @@ plugins {
     id("kodbq-publish")
 }
 
-val springVersion = "5.3.19"
-
 repositories {
     maven { url = uri("https://repo.spring.io/libs-milestone") }
 }
 
 dependencies {
     api(project(":kodbq-core"))
-    implementation("org.springframework:spring-jdbc:$springVersion")
+    implementation("org.springframework:spring-jdbc:5.3.19")
 
     testImplementation(project(":kodbq-test-kit"))
     // pg test

@@ -24,16 +24,19 @@ private fun executeInsert(sqlClient: SqlClient, sqlAndParams: Pair<String, List<
         .onFailure(NoStackTraceThrowable::class.java).transform { KodbqException(it) }
 }
 
-private val pgBuilderOptions = defaultBuildOptions.copy(
-    expandIn = false,
-    paramPlaceholder = { "\$$it" }
-)
+private val pgBuilderOptions = defaultBuildOptions.copy(expandIn = false, paramPlaceholder = { "\$$it" })
+private val mssqlBuilderOptions = defaultBuildOptions.copy(paramPlaceholder = { "@p$it" })
+
+private fun SqlBuilder.setBuilderOptionsByDialect() {
+    if (dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    else if (dialect == SqlDialect.MS_SQL) buildOptions = mssqlBuilderOptions
+}
 
 fun SqlBuilder.execute(client: SqlClient): Uni<RowSet<Row>> {
-    if(dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    setBuilderOptionsByDialect()
     return execute(client, buildSqlAndParams())
 }
 fun InsertBuilder.execute(client: SqlClient): Uni<RowSet<Row>> {
-    if(dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    setBuilderOptionsByDialect()
     return executeInsert(client, buildSqlAndParams())
 }

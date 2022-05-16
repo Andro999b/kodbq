@@ -3,19 +3,15 @@ package io.hatis.kodbq.vertx
 import io.hatis.kodbq.SqlDialect
 import io.vertx.mysqlclient.MySQLConnectOptions
 import io.vertx.mysqlclient.MySQLPool
-import io.vertx.mysqlclient.impl.MySQLPoolOptions
-import io.vertx.pgclient.PgConnectOptions
-import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.PoolOptions
 import org.testcontainers.containers.MySQLContainer
-import org.testcontainers.containers.PostgreSQLContainer
 
 private val container = MySQLContainer("mysql:8.0")
     .withUsername("test")
     .withPassword("test")
     .withInitScript("mysql.sql")
 
-class VertxTestMysql: VertxTest(
+class VertxTestMySql: VertxTest(
     container,
     SqlDialect.MY_SQL,
     { vertx, container ->

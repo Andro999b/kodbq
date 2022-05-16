@@ -40,24 +40,27 @@ fun executeBatch(sqlClient: SqlClient, sqlAndParams: Pair<String, List<List<Any?
         .executeBatch(params.map { Tuple.tuple(it) })
 }
 
-private val pgBuilderOptions = defaultBuildOptions.copy(
-    expandIn = false,
-    paramPlaceholder = { "\$$it" }
-)
+private val pgBuilderOptions = defaultBuildOptions.copy(expandIn = false, paramPlaceholder = { "\$$it" })
+private val mssqlBuilderOptions = defaultBuildOptions.copy(paramPlaceholder = { "@p$it" })
+
+private fun SqlBuilder.setBuilderOptionsByDialect() {
+    if (dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    else if (dialect == SqlDialect.MS_SQL) buildOptions = mssqlBuilderOptions
+}
 
 fun SqlBuilder.execute(sqlClient: SqlClient, handler: Handler<AsyncResult<RowSet<Row>>>) {
-    if(dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    setBuilderOptionsByDialect()
     return execute(sqlClient, buildSqlAndParams(), handler)
 }
 fun SqlBuilder.execute(sqlClient: SqlClient): Future<RowSet<Row>> {
-    if(dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    setBuilderOptionsByDialect()
     return execute(sqlClient, buildSqlAndParams())
 }
 fun InsertBuilder.execute(sqlClient: SqlClient, handler: Handler<AsyncResult<RowSet<Row>>>) {
-    if(dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    setBuilderOptionsByDialect()
     executeBatch(sqlClient, buildSqlAndParams(), handler)
 }
 fun InsertBuilder.execute(sqlClient: SqlClient): Future<RowSet<Row>> {
-    if(dialect == SqlDialect.PG) buildOptions = pgBuilderOptions
+    setBuilderOptionsByDialect()
     return executeBatch(sqlClient, buildSqlAndParams())
 }

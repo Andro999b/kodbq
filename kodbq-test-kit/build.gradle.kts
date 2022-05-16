@@ -1,4 +1,4 @@
-val kotestVersion = "5.2.2"
+val kotestVersion = "5.3.0"
 
 dependencies {
     api(project(":kodbq-core"))

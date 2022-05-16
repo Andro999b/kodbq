@@ -1,51 +1,13 @@
 package io.hatis.kodbq.spring.r2dbc
 
 import io.hatis.kodbq.*
-import io.r2dbc.spi.Statement
 import org.springframework.r2dbc.core.DatabaseClient
-import org.springframework.r2dbc.core.FetchSpec
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 
-
-private fun batch(
-    databaseClient: DatabaseClient,
-    sqlAndParams: Pair<String, List<List<Any?>>>,
-    generatedKeys: Set<String>,
-    dialect: SqlDialect,
-): Mono<InsertResult> {
-    val (sql, params) = sqlAndParams
-
-    return databaseClient.inConnection { connection ->
-        var statement = connection.createStatement(sql)
-
-        if (generatedKeys.isNotEmpty()) {
-            statement = statement.returnGeneratedValues(*generatedKeys.toTypedArray())
-        }
-
-        params.forEach { statement = statement.bindParams(it).add() }
-
-        //R2DBC suck with batch
-        Flux.from(statement.execute())
-            .flatMap {
-                it.map { row, _ ->
-                    val m = mutableMapOf<String, Any>()
-                    generatedKeys.forEach { key ->
-                        val value = row.get(key)
-                        if (value != null) m[key] = value
-                    }
-                    return@map m
-                }
-            }
-            .collectList()
-            .map { InsertResult(it.size, it) }
-    }
-}
-
-private fun query(
+private fun buildSpec(
     databaseClient: DatabaseClient,
     sqlAndParams: Pair<String, List<Any?>>
-): FetchSpec<MutableMap<String, Any>> {
+): DatabaseClient.GenericExecuteSpec {
     val (sql, params) = sqlAndParams
 
     var executeSpec = databaseClient.sql(sql)
@@ -58,37 +20,26 @@ private fun query(
         }
     }
 
-    return executeSpec.fetch()
+    return executeSpec
 }
 
-private fun Statement.bindParams(params: List<Any?>): Statement {
-    params.forEachIndexed { i, v ->
-        if (v == null) {
-            bindNull(i, Any::class.java)
-        } else {
-            bind(i, v)
-        }
-    }
+private val r2dbcMSSqlBuildOptions = defaultBuildOptions.copy(paramPlaceholder = {"@p${it-1}"})
+private val r2dbcPGBuildOptions = defaultBuildOptions.copy(paramPlaceholder = {"\$$it"})
 
-    return this
+private fun SqlBuilder.setBuildOptionsForDialect() {
+    if (dialect == SqlDialect.MS_SQL) buildOptions = r2dbcMSSqlBuildOptions
+    else if (dialect == SqlDialect.PG) buildOptions = r2dbcPGBuildOptions
 }
 
-private val r2dbcBuildOptions = defaultBuildOptions.copy(
-    generatedKeysSql = false,
-    paramPlaceholder = { "\$$it" }
-)
-
-fun SqlBuilder.execute(databaseClient: DatabaseClient): FetchSpec<MutableMap<String, Any>> {
-    buildOptions = r2dbcBuildOptions
-    return query(databaseClient, buildSqlAndParams())
+fun SqlBuilder.build(databaseClient: DatabaseClient): DatabaseClient.GenericExecuteSpec {
+    setBuildOptionsForDialect()
+    return buildSpec(databaseClient, buildSqlAndParams())
 }
 
-fun InsertBuilder.execute(databaseClient: DatabaseClient): Mono<InsertResult> {
-    buildOptions = r2dbcBuildOptions
-    return batch(
-        databaseClient,
-        buildSqlAndParams(),
-        generatedKeys,
-        dialect
-    )
+fun InsertBuilder.build(databaseClient: DatabaseClient): Flux<DatabaseClient.GenericExecuteSpec> {
+    setBuildOptionsForDialect()
+    val (sql, params) = buildSqlAndParams()
+
+    return Flux.fromIterable(params)
+        .map { buildSpec(databaseClient, sql to it) }
 }

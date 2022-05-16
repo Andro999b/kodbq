@@ -3,11 +3,9 @@ plugins {
     id("kodbq-publish")
 }
 
-val fluentjdbcVersion = "1.8.5"
-
 dependencies {
     api(project(":kodbq-core"))
-    api("org.codejargon:fluentjdbc:$fluentjdbcVersion")
+    api("org.codejargon:fluentjdbc:1.8.5")
 
     testImplementation(project(":kodbq-test-kit"))
     testImplementation("org.apache.commons:commons-dbcp2:2.9.0")
