@@ -132,7 +132,7 @@ fun selectUsersSortedByAgeAndCreated() = sqlSelect("users") {
 }
 
 fun selectOrdersByCteatedAndPrice() = sqlSelect("orders") {
-    sort(setOf("created", "price"))
+    sort("created", "price")
 }
 
 fun selectUsersWithAgeInRanges(ranges: Collection<IntRange>) = sqlSelect("users") {

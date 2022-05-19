@@ -1,7 +1,7 @@
 package io.hatis.kodbq
 
 interface Named {
-    val escapeName: String
+    val sql: String
 }
 
 interface Function

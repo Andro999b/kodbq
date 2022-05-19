@@ -1,6 +1,6 @@
 package io.hatis.kodbq
 
-var kodbqDialect = SqlDialect.PG
+var kodbqDialect = SqlDialect.SQL92
 
 fun sqlInsert(
     tableName: String,

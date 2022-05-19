@@ -9,7 +9,7 @@ class Column(
     val isStar = name == "*"
     val escapeTable = table?.let { dialect.escape(table) }
 
-    override val escapeName: String
+    override val sql: String
         get() {
             val name = if (isStar) return "*" else dialect.escape(name)
             return if (table != null) {
@@ -19,7 +19,7 @@ class Column(
             }
         }
 
-    override fun toString() = escapeName
+    override fun toString() = sql
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -54,15 +54,15 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         sortByTable(tableName, columnName, asc)
     }
 
-    fun sort(columns: Collection<String>, asc: Boolean = true) {
-        sortByTable(tableName, columns, asc)
+    fun sort(vararg columns: String, asc: Boolean = true) {
+        sortByTable(tableName, *columns, asc = asc)
     }
 
     fun sortByTable(tableName: String, columnName: String, asc: Boolean = true) {
         this.sort += SelectBuilder.Sort(Column(columnName, dialect, tableName), asc)
     }
 
-    fun sortByTable(tableName: String, columns: Collection<String>, asc: Boolean = true) {
+    fun sortByTable(tableName: String, vararg columns: String, asc: Boolean = true) {
         this.sort += columns.map { SelectBuilder.Sort(Column(it, dialect, tableName), asc) }.toSet()
     }
 

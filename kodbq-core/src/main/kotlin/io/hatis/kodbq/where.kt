@@ -63,7 +63,7 @@ internal class WhereBuilder(
                     WhereOps.IN -> buildInPart(wherePart)
                     else -> {
                         outParams.add(wherePart.value)
-                        val column = wherePart.column.escapeName
+                        val column = wherePart.column.sql
                         val placeholder = paramPlaceholder(outParams.size + paramsIndexOffset)
                         builder
                             .append(column)
@@ -72,8 +72,8 @@ internal class WhereBuilder(
                     }
                 }
             }
-            is WhereColumnIsNotNull -> builder.append(wherePart.column.escapeName).append(" is not null")
-            is WhereColumnIsNull -> builder.append(wherePart.column.escapeName).append(" is null")
+            is WhereColumnIsNotNull -> builder.append(wherePart.column.sql).append(" is not null")
+            is WhereColumnIsNull -> builder.append(wherePart.column.sql).append(" is null")
             is WhereGeneratedSql -> {
                 builder.append(
                     wherePart.nativeSql.generate(
@@ -96,7 +96,7 @@ internal class WhereBuilder(
 
         if(buildOptions.expandIn) {
             builder
-                .append(wherePart.column.escapeName)
+                .append(wherePart.column.sql)
                 .append(" in(")
 
             value.forEach {
@@ -113,7 +113,7 @@ internal class WhereBuilder(
             SqlDialect.PG -> {
                 outParams.add(value)
                 builder
-                    .append(wherePart.column.escapeName)
+                    .append(wherePart.column.sql)
                     .append("=any(")
                     .append(paramPlaceholder(outParams.size + paramsIndexOffset))
                     .append(")")
@@ -121,7 +121,7 @@ internal class WhereBuilder(
             else -> {
                 outParams.add(value)
                 builder
-                    .append(wherePart.column.escapeName)
+                    .append(wherePart.column.sql)
                     .append(" in(")
                     .append(paramPlaceholder(outParams.size + paramsIndexOffset))
                     .append(")")
