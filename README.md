@@ -4,6 +4,9 @@ KoDBQ is DSL syntax library for generating sql queries.
 Library build around idea to have just simple sql generator that just output sql query and positioning/named parameters that can be used with any other DB library framework.
 Library also provide ready to use integration with various db libs/frameworks.
 
+[![Testing](https://github.com/Andro999b/kodbq/actions/workflows/testing.yaml/badge.svg)](https://github.com/Andro999b/kodbq/actions/workflows/testing.yaml)
+[![](https://jitpack.io/v/Andro999b/kodbq.svg)](https://jitpack.io/#Andro999b/kodbq)
+
 ## Supported Integrations
 
 - JDBC
@@ -17,9 +20,29 @@ Library also provide ready to use integration with various db libs/frameworks.
 
 ## Getting Started
 
-add library to you project
-
-build some query
+Add it in your root build.gradle at the end of repositories:
+```groovy
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+Add the dependency:
+```groovy
+dependencies {
+    implementation "com.github.Andro999b:kodbq-jdbc:$version"
+    implementation "com.github.Andro999b:kodbq-spring-jdbc:$version"
+    implementation "com.github.Andro999b:kodbq-spring-r2dbc:$version"
+    implementation "com.github.Andro999b:kodbq-fluent-jdbc:$version"
+    implementation "com.github.Andro999b:kodbq-vertx:$version"
+    implementation "com.github.Andro999b:kodbq-vertx-jdbc:$version"
+    implementation "com.github.Andro999b:kodbq-mutiny-vertx:$version"
+    implementation "com.github.Andro999b:kodbq-mutiny-vertx-jdbc:$version"
+}
+```
+Latest version can be found at [Jitpack](https://jitpack.io/#Andro999b/kodbq)  
+Build some query
 
 ```kotlin
 val (sql, params) = 
@@ -242,7 +265,9 @@ sqlSelect("users") {
     }
     
     // sort by joined table
-    sortByTable("orders", "price")
+    sort {
+        table("orders") { asc("price") }
+    }
     
     // group by joined table
     groupByTable("orders", "user_id")
