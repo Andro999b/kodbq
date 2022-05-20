@@ -180,10 +180,10 @@ sqlSelect("users") {
 sqlInsert("users") {
     values {
         column("name", "Alice")
-        columns(mapOf(
+        columns(
             "age" to 18,
             "gender" to "female"
-        ))
+        )
     }
     // returns generated keys (functionality depends on db driver)
     generatedKeys("id")
@@ -197,10 +197,8 @@ sqlInsert("users") {
         values {
             column("name", user.name)
             columns(
-                mapOf(
-                    "age" to user.age,
-                    "gender" to user.gender
-                )
+                "age" to user.age,
+                "gender" to user.gender
             )
         }
     }
