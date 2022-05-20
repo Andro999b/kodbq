@@ -138,3 +138,122 @@ sqlSelect("users") {
     }
 }
 ```
+
+### Table joins 
+```kotlin
+sqlSelect("users") {
+    // inner join
+    join("orders", "user_id") on "id"
+    // left join
+    leftJoin("orders", "user_id") on "id"
+    // right join
+    rightJoin("orders", "user_id") on "id"
+    // full join
+    fullJoin("orders", "user_id") on "id" 
+    // join third table
+    join("orders_status", "order_id").on("orders", "id")
+    
+    // return columns of joined tables
+    returns {
+        table("orders") {
+            columns("price")
+        }
+    }
+    
+    // filter by joined table
+    where {
+        table("orders") {
+            column("price") gt 10
+        }
+    }
+    
+    // sort by joined table
+    sortByTable("orders", "price")
+    
+    // group by joined table
+    groupByTable("orders", "user_id")
+}
+```
+
+### Insert
+```kotlin
+sqlInsert("users") {
+    values {
+        column("name", "Alice")
+        columns(mapOf(
+            "age" to 18,
+            "gender" to "female"
+        ))
+    }
+    // returns generated keys (functionality depends on db driver)
+    generatedKeys("id")
+}
+```
+
+### Batch Insert
+```kotlin
+sqlInsert("users") {
+    users.forEach { user ->
+        values {
+            column("name", user.name)
+            columns(
+                mapOf(
+                    "age" to user.age,
+                    "gender" to user.gender
+                )
+            )
+        }
+    }
+}
+```
+
+### Delete 
+```kotlin
+sqlDelete("users") {
+    where { // same dsl filter as in sqlSelect
+        column("name") eq "Jhon"
+    }
+}
+```
+
+### Delete All
+```kotlin
+sqlDelete("users")
+```
+
+### Update
+```kotlin
+sqlDelete("users") {
+    values {
+        column("age", 60)
+    }
+    where { // same dsl filter as in sqlSelect
+        column("name") eq "Jake"
+    }
+}
+```
+
+### Update All
+```kotlin
+sqlDelete("users") {
+    values {
+        column("deleted", null)
+    }
+}
+```
+
+### Sql Dialect
+By default, library generate syntax compatible with SQL92 specification.
+By for some DB you will need set SQL Dialect (MSQL). There is 2 ways to specify sql dialect:
+
+Globally:
+
+```kotlin
+kodbqDialect = SqlDialect.MS_SQL
+```
+
+or per request:
+
+```kotlin
+sqlSelect("users", dialect = SqlDialect.MY_SQL)
+```

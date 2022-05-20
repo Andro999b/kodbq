@@ -4,16 +4,17 @@ class DSLDeleteBuilder(
     private val tableName: String,
     private val dialect: SqlDialect
 ) {
-    private lateinit var dslConditionBuilder: DSLUpdateConditionBuilder
+    private var dslConditionBuilder: DSLUpdateConditionBuilder? = null
 
     fun where(builderActions: DSLUpdateConditionBuilder.() -> Unit) {
-        dslConditionBuilder = DSLUpdateConditionBuilder(dialect)
+        val dslConditionBuilder = DSLUpdateConditionBuilder(dialect)
         dslConditionBuilder.builderActions()
+        this.dslConditionBuilder = dslConditionBuilder
     }
 
     internal fun createDeleteBuilder() = DeleteBuilder(
         tableName = tableName,
-        where = dslConditionBuilder.createWhereCondition(),
+        where = dslConditionBuilder?.createWhereCondition(),
         dialect = dialect
     )
 }
