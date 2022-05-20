@@ -2,9 +2,10 @@ package io.hatis.kodbq
 
 class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDialect) {
     private var dslConditionBuilder: DSLSelectConditionBuilder? = null
-    private var dslReturnsBuilder: DSLHierarchyReturnsBuilder? = null
+    private var dslReturnsBuilder: DSLTableReturnsBuilder? = null
+    private var dslHavingBuilder: DSLHavingBuilder? = null
     private val joins: MutableList<SelectBuilder.Join> = mutableListOf()
-    private var sort: MutableSet<SelectBuilder.Sort> = mutableSetOf()
+    private var dslSortBuilder: DSLTableSortBuilder? = null
     private var groupByColumns: MutableSet<Column> = mutableSetOf()
     private var limit: SelectBuilder.Limit? = null
     private var distinct: Boolean = false
@@ -14,17 +15,10 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         distinct = true
     }
 
-    fun returns(builderActions: DSLHierarchyReturnsBuilder.() -> Unit) {
-        val dslReturnsBuilder = DSLHierarchyReturnsBuilder(dialect, tableName)
+    fun returns(builderActions: DSLTableReturnsBuilder.() -> Unit) {
+        val dslReturnsBuilder = DSLTableReturnsBuilder(dialect, tableName)
         dslReturnsBuilder.builderActions()
         this.dslReturnsBuilder = dslReturnsBuilder
-    }
-
-    fun where(builderActions: DSLSelectConditionBuilder.() -> Unit) {
-        val dslConditionBuilder = DSLSelectConditionBuilder(dialect, tableName)
-        dslConditionBuilder.builderActions()
-
-        this.dslConditionBuilder = dslConditionBuilder
     }
 
     fun join(joinTable: String, joinColumnName: String) = joinBuilder.apply {
@@ -49,21 +43,34 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         joinMode = SelectBuilder.JoinMode.FULL
     }
 
+    fun where(builderActions: DSLSelectConditionBuilder.() -> Unit) {
+        val dslConditionBuilder = DSLSelectConditionBuilder(dialect, tableName)
+        dslConditionBuilder.builderActions()
 
-    fun sort(columnName: String, asc: Boolean = true) {
-        sortByTable(tableName, columnName, asc)
+        this.dslConditionBuilder = dslConditionBuilder
     }
 
-    fun sort(vararg columns: String, asc: Boolean = true) {
-        sortByTable(tableName, *columns, asc = asc)
+
+    fun groupBy(vararg columnNames: String) {
+        groupByTable(tableName, *columnNames)
     }
 
-    fun sortByTable(tableName: String, columnName: String, asc: Boolean = true) {
-        this.sort += SelectBuilder.Sort(Column(columnName, dialect, tableName), asc)
+    fun groupByTable(tableName: String, vararg columnNames: String) {
+        columnNames.forEach {
+            groupByColumns += Column(it, dialect, tableName)
+        }
     }
 
-    fun sortByTable(tableName: String, vararg columns: String, asc: Boolean = true) {
-        this.sort += columns.map { SelectBuilder.Sort(Column(it, dialect, tableName), asc) }.toSet()
+    fun having(builderActions: DSLHavingBuilder.() -> Unit) {
+        val dslHavingBuilder = DSLHavingBuilder(dialect, tableName)
+        dslHavingBuilder.builderActions()
+        this.dslHavingBuilder = dslHavingBuilder
+    }
+
+    fun sort(builderActions: DSLTableSortBuilder.() -> Unit) {
+        val dslSortBuilder = DSLTableSortBuilder(dialect, tableName)
+        dslSortBuilder.builderActions()
+        this.dslSortBuilder = dslSortBuilder
     }
 
     fun limit(count: Int) {
@@ -81,22 +88,13 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         this.limit = SelectBuilder.Limit(from, to - from)
     }
 
-    fun groupBy(vararg columnNames: String) {
-        groupByTable(tableName, *columnNames)
-    }
-
-    fun groupByTable(tableName: String, vararg columnNames: String) {
-        columnNames.forEach {
-            groupByColumns += Column(it, dialect, tableName)
-        }
-    }
-
     internal fun createSelectBuilder() = SelectBuilder(
         tableName = tableName,
         joins = joins,
         where = dslConditionBuilder?.createWhereCondition(),
+        having = dslHavingBuilder?.createWhereCondition(),
         limit = limit,
-        sort = sort,
+        sort = dslSortBuilder?.sortColumns ?: emptySet(),
         distinct = distinct,
         returns = dslReturnsBuilder?.createReturns() ?: SelectBuilder.Returns(),
         groupByColumns = groupByColumns,

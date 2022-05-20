@@ -1,6 +1,6 @@
 package io.hatis.kodbq
 
-class DSLUpdateConditionBuilder(mode: SqlDialect) : DSLHierarchyConditionBuilder(mode, null) {
+class DSLUpdateConditionBuilder(mode: SqlDialect) : DSLConditionBuilder(mode, null, And()) {
     fun or(builderActions: DSLUpdateConditionBuilder.() -> Unit) {
         val builder = DSLUpdateConditionBuilder(dialect)
         builder.builderActions()

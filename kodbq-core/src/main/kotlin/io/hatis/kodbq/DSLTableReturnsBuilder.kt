@@ -1,6 +1,6 @@
 package io.hatis.kodbq
 
-class DSLHierarchyReturnsBuilder(mode: SqlDialect, tableName: String): DSLReturnsBuilder(mode, tableName) {
+class DSLTableReturnsBuilder(dialect: SqlDialect, tableName: String): DSLReturnsBuilder(dialect, tableName) {
     fun table(tableName: String, builderActions: DSLReturnsBuilder.() -> Unit) {
         DSLReturnsBuilder(dialect, tableName, functions, columns).builderActions()
     }

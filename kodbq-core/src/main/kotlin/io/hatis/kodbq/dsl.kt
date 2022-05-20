@@ -46,5 +46,3 @@ fun sql(
     dialect: SqlDialect = kodbqDialect,
     generatorFun: NativeSql.Generator.() -> String
 ) = QueryBuilder(NativeSql(dialect, generatorFun))
-
-

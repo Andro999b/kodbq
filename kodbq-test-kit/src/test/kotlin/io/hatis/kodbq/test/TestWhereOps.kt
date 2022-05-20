@@ -6,30 +6,80 @@ import io.hatis.kodbq.sqlSelect
 import io.kotest.core.spec.style.StringSpec
 
 class TestWhereOps : StringSpec({
-    listOf(
-        WhereOps.LT,
-        WhereOps.GT,
-        WhereOps.LTE,
-        WhereOps.GTE,
-        WhereOps.EQ,
-        WhereOps.NEQ,
-        WhereOps.LIKE
-    ).forEach { op ->
-        "select form table with op: $op" {
-            val value = 0
-            sqlSelect("table") {
-                where { column("col", op, value) }
-            }
-                .expectSqlAndParams(
-                    "select * from \"table\" where \"table\".\"col\"${op.op}?",
-                    listOf(value)
-                )
+    "select form table with op: LT" {
+        val value = 0
+        sqlSelect("table") {
+            where { column("col") lt value }
         }
+            .expectSqlAndParams(
+                "select * from \"table\" where \"table\".\"col\"<?",
+                listOf(value)
+            )
+    }
+    "select form table with op: GT" {
+        val value = 0
+        sqlSelect("table") {
+            where { column("col") gt value }
+        }
+            .expectSqlAndParams(
+                "select * from \"table\" where \"table\".\"col\">?",
+                listOf(value)
+            )
+    }
+    "select form table with op: LTE" {
+        val value = 0
+        sqlSelect("table") {
+            where { column("col") lte value }
+        }
+            .expectSqlAndParams(
+                "select * from \"table\" where \"table\".\"col\"<=?",
+                listOf(value)
+            )
+    }
+    "select form table with op: GTE" {
+        val value = 0
+        sqlSelect("table") {
+            where { column("col") gte value }
+        }
+            .expectSqlAndParams(
+                "select * from \"table\" where \"table\".\"col\">=?",
+                listOf(value)
+            )
+    }
+    "select form table with op: EQ" {
+        val value = 0
+        sqlSelect("table") {
+            where { column("col") eq value }
+        }
+            .expectSqlAndParams(
+                "select * from \"table\" where \"table\".\"col\"=?",
+                listOf(value)
+            )
+    }
+    "select form table with op: NEQ" {
+        val value = 0
+        sqlSelect("table") {
+            where { column("col") neq value }
+        }
+            .expectSqlAndParams(
+                "select * from \"table\" where \"table\".\"col\"!=?",
+                listOf(value)
+            )
+    }
+    "select form table with op: LIKE" {
+        val value = "test"
+        sqlSelect("table") {
+            where { column("col") like value }
+        }
+            .expectSqlAndParams(
+                "select * from \"table\" where \"table\".\"col\" like ?",
+                listOf(value)
+            )
     }
     "select form table with op: IN for postgres" {
         val value = arrayOf(0, 1, 2)
         sqlSelect("table") {
-            where { column("col", WhereOps.IN, value) }
+            where { column("col") inArray value }
         }
             .apply {
                 buildOptions = buildOptions.copy(expandIn = false)
@@ -42,7 +92,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: IN for mysql" {
         val value = arrayOf(0, 1, 2)
         sqlSelect("table", dialect = SqlDialect.MY_SQL) {
-            where { column("col", WhereOps.IN, value) }
+            where { column("col") inArray value }
         }
             .expectSqlAndParams(
                 "select * from `table` where `table`.`col` in(?,?,?)",

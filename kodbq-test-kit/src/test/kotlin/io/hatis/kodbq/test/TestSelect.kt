@@ -107,6 +107,14 @@ class TestSelect : StringSpec({
                 listOf(from)
             )
     }
+    "select users id with order min price" {
+        val minPrice = 10
+        selectUsersWithOrderMinPrice(minPrice)
+            .expectSqlAndParams(
+                "select \"orders\".\"user_id\" from \"orders\" group by \"orders\".\"user_id\" having max(\"orders\".\"price\")>=?",
+                listOf(minPrice)
+            )
+    }
     "select users orders count" {
         selectUsersOrdersCount()
             .expectSqlAndParams(

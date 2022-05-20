@@ -22,28 +22,28 @@ fun selectByUserIds(userId: List<Long>) = sqlSelect("users") {
 }
 
 fun selectUsersWithOffset(offset: Int, limit: Int) = sqlSelect("users") {
-    sort("id")
+    sort { asc("id") }
     offset(offset)
     limit(limit)
 }
 
 fun selectUsersInRange(from: Int, to: Int) = sqlSelect("users") {
-    sort("id")
+    sort { asc("id") }
     range(from, to)
 }
 
 fun selectUserAgeBetween(from: Int, to: Int) = sqlSelect("users") {
     where {
-        column("age", WhereOps.GTE, from)
+        column("age") gte from
         and {
-            column("age", WhereOps.LTE, to)
+            column("age") lte to
         }
     }
 }
 
 fun selectUserWithNameLike(name: String) = sqlSelect("users") {
     where {
-        column("name", WhereOps.LIKE, name)
+        column("name") like name
     }
 }
 
@@ -62,13 +62,13 @@ fun selectUsersNameAndAge() = sqlSelect("users") {
 
 fun selectOrderSince(time: OffsetDateTime) = sqlSelect("orders") {
     where {
-        column("created", WhereOps.GT, time)
+        column("created") gt time
     }
 }
 
 fun selectOrderUntil(time: OffsetDateTime) = sqlSelect("orders") {
     where {
-        column("created", WhereOps.LT, time)
+        column("created") lt time
     }
 }
 
@@ -84,6 +84,13 @@ fun selectUserOrders(userId: Long) = sqlSelect("orders") {
     }
     join("users", "id") on "user_id"
     where { column("user_id") eq userId }
+}
+
+fun selectUsersWithOrderMinPrice(minPrice: Int) = sqlSelect("orders") {
+    groupBy("user_id")
+    having {
+        max("price") gte minPrice
+    }
 }
 
 fun selectUsersOrdersFrom(from: OffsetDateTime) = sqlSelect("orders") {
@@ -113,7 +120,7 @@ fun selectUsersOrdersCount() = sqlSelect("users") {
     }
     rightJoin("orders", "user_id") on "id"
     groupBy("id", "name")
-    sort("id")
+    sort { asc("id") }
 }
 
 fun selectUsersAvgOrderPrice() = sqlSelect("users") {
@@ -123,24 +130,26 @@ fun selectUsersAvgOrderPrice() = sqlSelect("users") {
     }
     rightJoin("orders", "user_id") on "id"
     groupBy("id","name")
-    sort("id")
+    sort { asc("id") }
 }
 
 fun selectUsersSortedByAgeAndCreated() = sqlSelect("users") {
-    sort("age", asc = false)
-    sort("created")
+    sort {
+        desc("age")
+        asc("created")
+    }
 }
 
 fun selectOrdersByCteatedAndPrice() = sqlSelect("orders") {
-    sort("created", "price")
+    sort { asc("created", "price") }
 }
 
 fun selectUsersWithAgeInRanges(ranges: Collection<IntRange>) = sqlSelect("users") {
     where {
         ranges.forEach { range ->
             or {
-                column("age", WhereOps.GTE, range.first)
-                column("age", WhereOps.LTE, range.last)
+                column("age") gte range.first
+                column("age") lte range.last
             }
         }
     }

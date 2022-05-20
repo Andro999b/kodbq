@@ -4,6 +4,7 @@ class SelectBuilder(
     val tableName: String,
     val joins: Collection<Join>,
     val where: WherePart?,
+    val having: WherePart?,
     val sort: Collection<Sort> = emptySet(),
     val limit: Limit? = null,
     val distinct: Boolean = false,
@@ -11,7 +12,7 @@ class SelectBuilder(
     val groupByColumns: Set<Column> = emptySet(),
     override val dialect: SqlDialect
 ) : AbstractSqlBuilder() {
-    data class Sort(val column: Column, val asc: Boolean = true)
+    data class Sort(val column: Named, val asc: Boolean = true)
     data class Limit(val offset: Int = 0, val count: Int = 0)
 
     enum class JoinMode(val sql: String) { INNER(""), LEFT("left"), RIGHT("right"), FULL("full"), }
@@ -67,13 +68,19 @@ class SelectBuilder(
             if (groupByColumns.isNotEmpty()) {
                 append(" group by ")
                 appendWithDelimiter(groupByColumns.map { it.toString() })
+                having?.let {
+                    val whereString = WhereBuilder(buildOptions, buildOptions.paramPlaceholder, params).build(it)
+                    if (whereString.isNotEmpty()) {
+                        append(" having ")
+                        append(whereString)
+                    }
+                }
             }
 
             if (sort.isNotEmpty()) {
                 append(" order by ")
                 appendWithDelimiter(sort.map { "${it.column}${if (it.asc) "" else " desc"}" })
             }
-
 
             limit?.let {
                 if (dialect != SqlDialect.MS_SQL) {

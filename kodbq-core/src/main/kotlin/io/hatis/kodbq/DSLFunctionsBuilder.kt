@@ -5,7 +5,7 @@ open class DSLFunctionsBuilder(
     protected val tableName: String,
     protected val functions: MutableMap<String, Function> = mutableMapOf(),
 ) {
-    fun count(alias: String) = count( "*", alias)
+    fun count(alias: String) = count("*", alias)
     fun count(column: String, alias: String) = function("count", column, alias)
     fun max(column: String, alias: String) = function("max", column, alias)
     fun min(column: String, alias: String) = function("min", column, alias)

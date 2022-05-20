@@ -109,6 +109,11 @@ fun selectsTestFactory(execute: ExecuteAndGetFun) = stringSpec {
         orders.map { it["orderid"] } shouldBe listOf(3, 4, 5)
         orders.map { it["order_status"] } shouldBe listOf("new", "paid", "shipped")
     }
+    "select userid with min price" {
+        val minPrice = 100
+        val  result = selectUsersWithOrderMinPrice(minPrice).execute()
+        result.map { it["user_id"] }.toSet() shouldBe setOf(1,2,4)
+    }
     "select users orders count" {
         val result = selectUsersOrdersCount().execute()
         result.map { it["name"] } shouldBe listOf("Bob", "Alice", "John")

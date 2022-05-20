@@ -2,16 +2,18 @@ package io.hatis.kodbq
 
 open class DSLConditionBuilder(
     protected val dialect: SqlDialect,
-    private val tableName: String?,
-    protected val andJoint: And = And()
+    protected val tableName: String?,
+    protected var andJoint: And
 ) {
-    private val columnConditionBuilder = ColumnConditionBuilder(andJoint.parts, dialect)
+    protected val columnConditionBuilder = ColumnConditionBuilder(andJoint.parts, dialect)
+    protected val orJoint: Or = Or()
+
     fun id(value: Any) {
-        column("id", WhereOps.EQ, value)
+        column("id", value)
     }
 
     fun column(columnName: String, value: Any) {
-        column(columnName, WhereOps.EQ, value)
+        andJoint.parts += (WhereColumn(Column(columnName, dialect, tableName), WhereOps.EQ, value, dialect))
     }
 
     fun columns(vararg pairs: Pair<String, Any?>) {
@@ -36,12 +38,8 @@ open class DSLConditionBuilder(
         }
     }
 
-    fun column(columnName: String, value: Collection<Any>) {
-        column(columnName, WhereOps.IN, value)
-    }
-
-    fun column(columnName: String, op: WhereOps, value: Any) {
-        andJoint.parts += (WhereColumn(Column(columnName, dialect, tableName), op, value, dialect))
+    fun column(columnName: String, value: Collection<*>) {
+        andJoint.parts += (WhereColumn(Column(columnName, dialect, tableName), WhereOps.IN, value, dialect))
     }
 
     fun column(columnName: String): ColumnConditionBuilder {
@@ -62,11 +60,19 @@ open class DSLConditionBuilder(
         andJoint.parts += (WhereGeneratedSql(NativeSqlColumn(Column(columnName, dialect, tableName), actions)))
     }
 
+    fun createWhereCondition(): WherePart =
+        if (orJoint.parts.isEmpty()) {
+            andJoint
+        } else {
+            orJoint.parts.add(0, andJoint)
+            orJoint
+        }
+
     class ColumnConditionBuilder(
         private val parts: MutableList<WherePart>,
         private val dialect: SqlDialect
     ) {
-        internal lateinit var column: Column
+        internal lateinit var column: Named
         infix fun eq(value: Any) {
             parts += WhereColumn(column, WhereOps.EQ, value, dialect)
         }
@@ -96,6 +102,10 @@ open class DSLConditionBuilder(
         }
 
         infix fun `in`(value: Collection<Any>) {
+            parts += WhereColumn(column, WhereOps.IN, value, dialect)
+        }
+
+        infix fun inArray(value: Array<*>) {
             parts += WhereColumn(column, WhereOps.IN, value, dialect)
         }
 

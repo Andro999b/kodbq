@@ -1,7 +1,7 @@
 package io.hatis.kodbq
 
-class DSLSelectConditionBuilder(mode: SqlDialect, private val tableName: String? = null) :
-    DSLHierarchyConditionBuilder(mode, tableName) {
+class DSLSelectConditionBuilder(dialect: SqlDialect, tableName: String? = null) :
+    DSLConditionBuilder(dialect, tableName, And()) {
     fun table(tableOrAliasName: String, builderActions: DSLConditionBuilder.() -> Unit) {
         DSLConditionBuilder(dialect, tableOrAliasName, andJoint).builderActions()
     }

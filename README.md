@@ -66,6 +66,22 @@ sqlSelect("users") {
 }
 ```
 
+### Columns list to return
+```kotlin
+sqlSelect("users") {
+    returns {
+        columns("age", "name")
+        column("age", "user_age") // alias
+        columns(
+            "age" to "user_age",
+            "name" to "user_name"
+        ) // multiple fields with
+        count("users_count") // max, min, avg, sum
+        function("upper", "name", "upper_name") // upper(name) as upper_name
+    }
+}
+```
+
 ### Select with filter equals by multiple fields
 ```kotlin
 sqlSelect("users") {
@@ -85,14 +101,65 @@ sqlSelect("users") {
 }
 ```
 
+### Filter with `and` & `or`
+
+several `colunm`/`colunms` call are works as `and` condition so 
+```kotlin
+sqlSelect("users") {
+    where {
+        column("age", 18)
+        column("name", "Bob")
+    }
+}
+```
+will be converted to `"age"=18 and "name"='Bob'`  
+for `or` condition you need specify it directly with `or` block
+```kotlin
+sqlSelect("users") {
+    where {
+        column("age", 18)
+        or {
+            column("age", 90) 
+        }
+    }
+}
+```
+will be converted to `"age"=19 or "age"=90`  
+but if we want to filter all user with name "Bob" and age 18 or 90 this condition will not work 
+```kotlin
+sqlSelect("users") {
+    where {
+        column("name", "Bob")
+        column("age", 18)
+        or {
+            column("age", 90) 
+        }
+    }
+}
+```
+it will generate `("name" = "Bob" and "age"=19) or "age"=90`. In this case you need use `and` block
+```kotlin
+sqlSelect("users") {
+    where {
+        column("name", "Bob")
+        and {
+            column("age", 18)
+            or {
+                column("age", 90)
+            }
+        }
+    }
+}
+```
+
 ### Sort
 ```kotlin
 sqlSelect("users") {
-    sort("age")
-    // desc sort
-    sort("name", asc = false)
-    // sort by multiple fields
-    sort("created", "age")
+    sort {
+        asc("created", "age") // asc sort 
+        desc("name") // desc sort
+        count() // sort by agg function in asc order. count(asc = false) -- desc order
+    }
 }
 ```
 
@@ -117,27 +184,33 @@ sqlSelect("users", dialect = SqlDailect.MS_SQL) {
 ### Distinct
 ```kotlin
 sqlSelect("users") {
+    distict()
+}
+```
+
+### Group By
+```kotlin
+sqlSelect("users") {
     groupBy("age")
     // sort by multiple fields
     groupBy("age", "name")
 }
 ```
+**NOTE:** All columns names passed to group be will be also adder to returning columns.  
+E.G. first query will produce: `select "age" from "users" group by "age"`
 
-### Columns list to return
+
+### Having
 ```kotlin
 sqlSelect("users") {
-    returns {
-        columns("age", "name")
-        column("age", "user_age") // alias
-        columns(
-            "age" to "user_age",
-            "name" to "user_name"
-        ) // multiple fields with
-        count("users_count") // max, min, avg, sum
-        function("upper", "name", "upper_name") // upper(name) as upper_name
+    groupBy("name")
+    having {
+        min("age") gt 18
+        column("deleted").isNull
     }
 }
 ```
+
 
 ### Table joins 
 ```kotlin
@@ -162,8 +235,9 @@ sqlSelect("users") {
     
     // filter by joined table
     where {
-        table("orders") {
-            column("price") gt 10
+        table("orders") { column("price") gt 100 }
+        or {
+            table("orders") { column("price") lt 10 }
         }
     }
     
@@ -172,6 +246,13 @@ sqlSelect("users") {
     
     // group by joined table
     groupByTable("orders", "user_id")
+    
+    // having with joined table
+    having {
+        table("orders") {
+            count() gt 1
+        }
+    }
 }
 ```
 
