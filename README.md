@@ -61,7 +61,7 @@ val resultSet =
     .execute(datasource)
 ```
 
-all integration provide `execute` or `build` methods to queries
+all integration provide `execute` or `build` methods
 
 ## DSL Syntax example
 
