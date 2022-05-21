@@ -61,7 +61,7 @@ val resultSet =
     .execute(datasource)
 ```
 
-all integration provide `execute` or `build` methods to queries
+all integration provide `execute` or `build` methods
 
 ## DSL Syntax example
 
@@ -327,7 +327,7 @@ sqlDelete("users")
 
 ### Update
 ```kotlin
-sqlDelete("users") {
+sqlUpdate("users") {
     values {
         column("age", 60)
     }
@@ -339,7 +339,7 @@ sqlDelete("users") {
 
 ### Update All
 ```kotlin
-sqlDelete("users") {
+sqlUpdate("users") {
     values {
         column("deleted", null)
     }
