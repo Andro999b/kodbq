@@ -59,7 +59,7 @@ class TestAggregations: StringSpec({
             }
         }
             .expectSqlAndParams(
-                "select concat(?, `col`) as res from `table`",
+                "select concat(?, `table`.`col`) as res from `table`",
                 listOf(prefix)
             )
     }

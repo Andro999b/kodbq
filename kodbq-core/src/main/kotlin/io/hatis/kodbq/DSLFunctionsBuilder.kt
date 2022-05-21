@@ -17,6 +17,6 @@ open class DSLFunctionsBuilder(
     }
 
     fun native(alias: String, actions: NativeSql.Generator.() -> String) {
-        functions[alias] = NativeFunction(NativeSql(dialect, actions))
+        functions[alias] = NativeFunction(NativeSql(dialect, tableName, actions))
     }
 }

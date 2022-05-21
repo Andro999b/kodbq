@@ -56,8 +56,8 @@ open class DSLConditionBuilder(
         andJoint.parts += (WhereColumnIsNotNull(Column(columnName, dialect, tableName)))
     }
 
-    fun native(columnName: String, actions: NativeSqlColumn.Generator.() -> String?) {
-        andJoint.parts += (WhereGeneratedSql(NativeSqlColumn(Column(columnName, dialect, tableName), actions)))
+    fun native(actions: NativeSql.Generator.() -> String) {
+        andJoint.parts += (WhereGeneratedSql(NativeSql(dialect, tableName, actions)))
     }
 
     fun createWhereCondition(): WherePart =

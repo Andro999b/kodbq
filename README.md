@@ -346,6 +346,66 @@ sqlDelete("users") {
 }
 ```
 
+### Native sql
+There is couple places where you can write your one sql part
+```kotlin
+sqlSelect("users") {
+    returns {
+        native { 
+            // return true/false if column is null
+            "${c("deleted")} is null as deleted"
+            // inside all native block context methods props available:
+            // c("colName")/column("colName") - return full escaped column name. E.g: "tableName"."colName"
+            // t("tableName")/table("tableName") - return escaped table name
+            // dialect - SQL dialect
+            // v(1)/value(1) - add query parameter value
+        }
+    }
+    where {
+        native {
+            // custom condition
+            "upper(${c("name")})=${v("BOB")}"
+        }
+    }
+    having {
+        native {
+            // custom having filter
+            "count(*) > 1"
+        }
+    }
+}
+
+sqlInsert("users") {
+    values {
+        native("deleted") { // for insert and update you need specify column name
+            "now()"
+            // some addition properties available here:
+            // c/column - name of update/insert column
+            // usage - INSERT/UPDATE
+        }
+    }
+}
+
+sqlUpdate("users") {
+    set {
+        native("deleted") { // for insert and update you need specify column name
+            "now()"
+            // some addition properties available here:
+            // c/column - name of update/insert column
+            // usage - INSERT/UPDATE
+        }
+    }
+}
+```
+
+also you can use `sql` builder to implement some custom generation logic
+```kotlin
+sql {
+    "select * from ${t("users")} where ${c("name")}=${v("Bob")}"
+}
+```
+
+
 ### Sql Dialect
 By default, library generate syntax compatible with SQL92 specification.
 By for some DB you will need set SQL Dialect (MSQL). There is 2 ways to specify sql dialect:

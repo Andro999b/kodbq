@@ -20,7 +20,7 @@ abstract class WhereJoint(val separator: String) : WherePart {
 
 data class WhereColumn(val column: Named, val op: WhereOps, val value: Any, val dialect: SqlDialect) : WherePart
 
-data class WhereGeneratedSql(val nativeSql: NativeSqlColumn) : WherePart
+data class WhereGeneratedSql(val nativeSql: NativeSql) : WherePart
 data class WhereColumnIsNull(val column: Named) : WherePart
 data class WhereColumnIsNotNull(val column: Named) : WherePart
 class Or : WhereJoint("or")
@@ -77,7 +77,6 @@ internal class WhereBuilder(
             is WhereGeneratedSql -> {
                 builder.append(
                     wherePart.nativeSql.generate(
-                        NativeSqlColumn.Usage.CONDITION,
                         paramsIndexOffset,
                         outParams,
                         paramPlaceholder,

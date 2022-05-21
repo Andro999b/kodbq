@@ -42,21 +42,17 @@ class TestNativeSql : StringSpec({
         sqlSelect("t1") {
             join("t2", "t1_id") on "id"
             where {
-                native("c1") {
-                    usage shouldBe NativeSqlColumn.Usage.CONDITION
-                    "$c=${column("c2")}"
+                native {
+                    "${c("c1")}=${column("c2")}"
                 }
-                native("c3") {
-                    usage shouldBe NativeSqlColumn.Usage.CONDITION
-                    "$c=${column("t2", "c2")}"
+                native {
+                    "${c("c3")}=${column("t2", "c2")}"
                 }
-                native("c4") {
-                    usage shouldBe NativeSqlColumn.Usage.CONDITION
-                    "$c=${c("c2")}"
+                native {
+                    "${c("c4")}=${c("c2")}"
                 }
-                native("c5") {
-                    usage shouldBe NativeSqlColumn.Usage.CONDITION
-                    "$c=${c("t2", "c2")}"
+                native {
+                    "${c("c5")}=${c("t2", "c2")}"
                 }
             }
         }

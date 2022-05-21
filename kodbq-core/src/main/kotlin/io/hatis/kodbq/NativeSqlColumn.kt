@@ -37,5 +37,5 @@ class NativeSqlColumn(
         fun v(v: Any) = value(v)
     }
 
-    enum class Usage { INSERT, UPDATE, CONDITION }
+    enum class Usage { INSERT, UPDATE }
 }

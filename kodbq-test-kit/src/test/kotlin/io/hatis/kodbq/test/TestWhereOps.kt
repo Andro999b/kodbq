@@ -115,8 +115,8 @@ class TestWhereOps : StringSpec({
         val name = "bob"
         sqlSelect("table", dialect = SqlDialect.MS_SQL) {
             where {
-                native("col") {
-                    "json_value($c, '$.name')=${v(name)}"
+                native {
+                    "json_value(${c("col")}, '$.name')=${v(name)}"
                 }
             }
         }
