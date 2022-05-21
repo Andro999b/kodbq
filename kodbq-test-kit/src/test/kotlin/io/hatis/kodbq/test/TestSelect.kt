@@ -138,7 +138,7 @@ class TestSelect : StringSpec({
             .expectSqlAndParams("select * from \"users\" order by \"users\".\"age\" desc,\"users\".\"created\"")
     }
     "select orders sorted by created and price" {
-        selectOrdersByCteatedAndPrice()
+        selectOrdersByCreatedAndPrice()
             .expectSqlAndParams("select * from \"orders\" order by \"orders\".\"created\",\"orders\".\"price\"")
     }
     "select users with age in ranges" {
@@ -154,6 +154,15 @@ class TestSelect : StringSpec({
                         "(\"users\".\"age\">=? and \"users\".\"age\"<=?) or " +
                         "(\"users\".\"age\">=? and \"users\".\"age\"<=?)",
                 ranges.flatMap { listOf(it.first, it.last) }
+            )
+    }
+    "select user ids of laptop and charger orders" {
+        selectUserIdsOfLaptopAndChargerOrders()
+            .expectSqlAndParams(
+                "select * from \"orders\" where \"orders\".\"article\"=?\n" +
+                        "union all\n" +
+                        "select * from \"orders\" where \"orders\".\"article\"=?",
+                listOf("laptop", "charger")
             )
     }
 })

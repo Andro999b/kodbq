@@ -25,9 +25,9 @@ fun sqlUpdate(
 fun sqlSelect(
     tableName: String,
     dialect: SqlDialect = kodbqDialect,
-    builderActions: (DSLSelectBuilder.() -> Unit)? = null
+    builderActions: (DSLUnionSelectBuilder.() -> Unit)? = null
 ): SelectBuilder {
-    val dslInsertBuilder = DSLSelectBuilder(tableName, dialect)
+    val dslInsertBuilder = DSLUnionSelectBuilder(tableName, dialect)
     if(builderActions != null) dslInsertBuilder.builderActions()
     return dslInsertBuilder.createSelectBuilder()
 }

@@ -140,7 +140,7 @@ fun selectUsersSortedByAgeAndCreated() = sqlSelect("users") {
     }
 }
 
-fun selectOrdersByCteatedAndPrice() = sqlSelect("orders") {
+fun selectOrdersByCreatedAndPrice() = sqlSelect("orders") {
     sort { asc("created", "price") }
 }
 
@@ -152,6 +152,13 @@ fun selectUsersWithAgeInRanges(ranges: Collection<IntRange>) = sqlSelect("users"
                 column("age") lte range.last
             }
         }
+    }
+}
+
+fun selectUserIdsOfLaptopAndChargerOrders() = sqlSelect("orders") {
+    where { column("article", "laptop") }
+    union(all = true) {
+        where { column("article", "charger") }
     }
 }
 

@@ -1,6 +1,9 @@
 package io.hatis.kodbq
 
-class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDialect) {
+open class DSLSelectBuilder(
+    protected val tableName: String,
+    protected val dialect: SqlDialect
+) {
     private var dslConditionBuilder: DSLSelectConditionBuilder? = null
     private var dslReturnsBuilder: DSLTableReturnsBuilder? = null
     private var dslHavingBuilder: DSLHavingBuilder? = null
@@ -88,7 +91,7 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         this.limit = SelectBuilder.Limit(from, to - from)
     }
 
-    internal fun createSelectBuilder() = SelectBuilder(
+    internal fun createSelect(unionAll: Boolean) = SelectBuilder.Select(
         tableName = tableName,
         joins = joins,
         where = dslConditionBuilder?.createWhereCondition(),
@@ -98,7 +101,7 @@ class DSLSelectBuilder(private val tableName: String, private val dialect: SqlDi
         distinct = distinct,
         returns = dslReturnsBuilder?.createReturns() ?: SelectBuilder.Returns(),
         groupByColumns = groupByColumns,
-        dialect = dialect
+        unionAll = unionAll
     )
 
     class JoinBuilder(private val tableName: String, private val joins: MutableList<SelectBuilder.Join>) {

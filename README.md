@@ -281,6 +281,19 @@ sqlSelect("users") {
 }
 ```
 
+### Unions
+```kotlin
+sqlSelect("users") {
+    where { id(1) }
+    union(all = true) { // return 2 identical rows with union all
+        where { id(1) } // returns, groupBy, sort, having...
+    }
+    union("users_archive") { // union with another table
+        where { id(2) }
+    }
+}
+```
+
 ### Insert
 ```kotlin
 sqlInsert("users") {

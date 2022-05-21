@@ -129,7 +129,7 @@ fun selectsTestFactory(execute: ExecuteAndGetFun) = stringSpec {
         users.map { it["name"] } shouldBe listOf("Bob", "Mike", "John", "Alice", "Joe", "Bob Junior")
     }
     "select orders sorted by created and price" {
-        val orders = selectOrdersByCteatedAndPrice().execute()
+        val orders = selectOrdersByCreatedAndPrice().execute()
         orders.map { it["article"] } shouldBe listOf("lamp", "pc", "to_rename", "charger", "phone", "laptop")
     }
     "select users with age in ranges" {
@@ -140,6 +140,10 @@ fun selectsTestFactory(execute: ExecuteAndGetFun) = stringSpec {
         )
         val users = selectUsersWithAgeInRanges(ranges).execute()
         users.map { it["name"] } shouldBe listOf("Bob", "Alice", "Joe", "Bob Junior")
+    }
+    "select user ids of laptop and charger orders" {
+        val users = selectUserIdsOfLaptopAndChargerOrders().execute()
+        users.map { it["user_id"] } shouldBe listOf(4, 4)
     }
 }
 

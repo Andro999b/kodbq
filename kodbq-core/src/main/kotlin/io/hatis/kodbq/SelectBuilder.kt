@@ -1,15 +1,7 @@
 package io.hatis.kodbq
 
 class SelectBuilder(
-    val tableName: String,
-    val joins: Collection<Join>,
-    val where: WherePart?,
-    val having: WherePart?,
-    val sort: Collection<Sort> = emptySet(),
-    val limit: Limit? = null,
-    val distinct: Boolean = false,
-    val returns: Returns,
-    val groupByColumns: Set<Column> = emptySet(),
+    private val selects: Collection<Select>,
     override val dialect: SqlDialect
 ) : AbstractSqlBuilder() {
     data class Sort(val column: Named, val asc: Boolean = true)
@@ -27,13 +19,42 @@ class SelectBuilder(
         val functions: Map<String, Function> = emptyMap()
     )
 
+    data class Select(
+        val tableName: String,
+        val joins: Collection<Join>,
+        val where: WherePart?,
+        val having: WherePart?,
+        val sort: Collection<Sort> = emptySet(),
+        val limit: Limit? = null,
+        val distinct: Boolean = false,
+        val returns: Returns,
+        val groupByColumns: Set<Column> = emptySet(),
+        val unionAll: Boolean = false
+    )
+
     override fun buildSqlAndParams(): Pair<String, List<Any?>> {
-        val escape = dialect.escape
         val params = mutableListOf<Any?>()
         val sql = buildString {
+            selects.forEachIndexed { index, select ->
+                if(index > 0 ) {
+                    append("\n")
+                    append("union")
+                    if(select.unionAll) append(" all")
+                    append("\n")
+                }
+                buildSqlForSelect(select, params)
+            }
+        }
+
+        return sql to params
+    }
+
+    private fun StringBuilder.buildSqlForSelect(select: Select, params: MutableList<Any?>) {
+        val escape = dialect.escape
+        with(select) {
             if (distinct) append("select distinct ") else append("select ")
             val allColumns = returns.columns + groupByColumns
-            val allColumnNames = allColumns.map { columnToReturnField(it) } + getFunctions(params)
+            val allColumnNames = allColumns.map { columnToReturnField(it) } + getFunctions(returns, params)
 
             if (allColumnNames.isEmpty()) {
                 append("*")
@@ -109,8 +130,14 @@ class SelectBuilder(
                 }
             }
         }
+    }
 
-        return sql to params
+    private fun StringBuilder.appendWithDelimiter(strings: Collection<String>) {
+        strings.forEach {
+            append(it)
+            append(",")
+        }
+        delete(length - 1, length)
     }
 
     private fun columnToReturnField(c: Column): String =
@@ -119,7 +146,7 @@ class SelectBuilder(
         else
             c.toString()
 
-    private fun getFunctions(params: MutableList<Any?>): Collection<String> =
+    private fun getFunctions(returns: Returns, params: MutableList<Any?>): Collection<String> =
         returns.functions.entries.mapNotNull { (alias, f) ->
             when (f) {
                 is NativeFunction -> {
@@ -133,12 +160,4 @@ class SelectBuilder(
                 else -> null
             }
         }
-
-    private fun StringBuilder.appendWithDelimiter(strings: Collection<String>) {
-        strings.forEach {
-            append(it)
-            append(",")
-        }
-        delete(length - 1, length)
-    }
 }
