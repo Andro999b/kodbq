@@ -7,6 +7,27 @@ Library also provide ready to use integration with various db libs/frameworks.
 [![Testing](https://github.com/Andro999b/kodbq/actions/workflows/testing.yaml/badge.svg)](https://github.com/Andro999b/kodbq/actions/workflows/testing.yaml)
 [![](https://jitpack.io/v/Andro999b/kodbq.svg)](https://jitpack.io/#Andro999b/kodbq)
 
+# Table of Content
+- [Supported Integrations](#supported-integrations)
+- [Getting Started](#getting-started)
+- [DSL Syntax example](#dsl-syntax-example)
+    - [Select all](#select-all)
+    - [Select by id](#select-by-id)
+    - [Select with filters](#select-with-filters)
+    - [Columns list](#columns-list)
+    - [Sort](#sort)
+    - [Limit and offset](#limit-and-offset)
+    - [Distinct](#distinct)
+    - [Group By](#group-by)
+    - [Having](#having)
+    - [Joins](#joins)
+    - [Unions](#unions)
+    - [Insert](#insert)
+    - [Delete](#delete)
+    - [Update](#update)
+    - [Native sql](#native-sql)
+- [SQL Dialect](#sql-dialect)
+
 ## Supported Integrations
 
 - JDBC
@@ -89,44 +110,28 @@ sqlSelect("users") {
 }
 ```
 
-### Columns list to return
-```kotlin
-sqlSelect("users") {
-    returns {
-        columns("age", "name")
-        column("age", "user_age") // alias
-        columns(
-            "age" to "user_age",
-            "name" to "user_name"
-        ) // multiple fields with
-        count("users_count") // max, min, avg, sum
-        function("upper", "name", "upper_name") // upper(name) as upper_name
-    }
-}
-```
-
-### Select with filter equals by multiple fields
+filter by multiple fields
 ```kotlin
 sqlSelect("users") {
     where {
         columns(
-            "age" to 18,
-            "name" to "Alice",
-            "deleted" to null
+            "age" to 18, // "age"=18
+            "name" to setOf("Alice", "Bob"), // "name" in ('Alice', 'Bob')
+            "deleted" to null // "deleted" is null
         )
         // or
-        columns(mapOf(
+        columns(mapOf( // same with mapOf
             "age" to 18,
-            "name" to "Alice",
+            "name" to setOf("Alice", "Bob"),
             "deleted" to null
         ))
     }
 }
 ```
 
-### Filter with `and` & `or`
+Filter with `and` & `or`
 
-several `colunm`/`colunms` call are works as `and` condition so 
+several `colunm`/`colunms` call are works as `and` condition so
 ```kotlin
 sqlSelect("users") {
     where {
@@ -148,7 +153,7 @@ sqlSelect("users") {
 }
 ```
 will be converted to `"age"=19 or "age"=90`  
-but if we want to filter all user with name "Bob" and age 18 or 90 this condition will not work 
+but if we want to filter all user with name "Bob" and age 18 or 90 this condition will not work
 ```kotlin
 sqlSelect("users") {
     where {
@@ -171,6 +176,23 @@ sqlSelect("users") {
                 column("age", 90)
             }
         }
+    }
+}
+```
+
+
+### Columns list
+```kotlin
+sqlSelect("users") {
+    returns {
+        columns("age", "name")
+        column("age", "user_age") // alias
+        columns(
+            "age" to "user_age",
+            "name" to "user_name"
+        ) // multiple fields with
+        count("users_count") // max, min, avg, sum
+        function("upper", "name", "upper_name") // upper(name) as upper_name
     }
 }
 ```
@@ -235,7 +257,7 @@ sqlSelect("users") {
 ```
 
 
-### Table joins 
+### Joins 
 ```kotlin
 sqlSelect("users") {
     // inner join
@@ -309,7 +331,7 @@ sqlInsert("users") {
 }
 ```
 
-### Batch Insert
+Batch insert
 ```kotlin
 sqlInsert("users") {
     users.forEach { user ->
@@ -333,7 +355,7 @@ sqlDelete("users") {
 }
 ```
 
-### Delete All
+Delete all
 ```kotlin
 sqlDelete("users")
 ```
@@ -350,7 +372,7 @@ sqlUpdate("users") {
 }
 ```
 
-### Update All
+Update all
 ```kotlin
 sqlUpdate("users") {
     values {
@@ -419,7 +441,7 @@ sql {
 ```
 
 
-### Sql Dialect
+## SQL Dialect
 By default, library generate syntax compatible with SQL92 specification.
 By for some DB you will need set SQL Dialect (MSQL). There is 2 ways to specify sql dialect:
 
