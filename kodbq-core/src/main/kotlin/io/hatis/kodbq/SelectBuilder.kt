@@ -42,14 +42,14 @@ class SelectBuilder(
                     if(select.unionAll) append(" all")
                     append("\n")
                 }
-                buildSqlForSelect(select, params)
+                buildSelect(select, params)
             }
         }
 
         return sql to params
     }
 
-    private fun StringBuilder.buildSqlForSelect(select: Select, params: MutableList<Any?>) {
+    private fun StringBuilder.buildSelect(select: Select, params: MutableList<Any?>) {
         val escape = dialect.escape
         with(select) {
             if (distinct) append("select distinct ") else append("select ")
@@ -65,67 +65,83 @@ class SelectBuilder(
             append(" from ")
             append(escape(tableName))
 
-            joins.forEach { (joinTableColumn, onColumn, joinMode) ->
-                if (joinMode.sql.isNotEmpty()) {
-                    append(" ")
-                    append(joinMode.sql)
-                }
-                append(" join ")
-                append(joinTableColumn.escapeTable)
-                append(" on ")
-                append(joinTableColumn)
-                append("=")
-                append(onColumn)
-            }
+            buildJoins(joins)
+            buildFilter(where, params)
+            buildGroupBy(groupByColumns, having, params)
+            buildSort(sort)
+            buildLimit(limit, sort)
+        }
+    }
 
-            where?.let {
+    private fun StringBuilder.buildJoins(joins: Collection<Join>) {
+        joins.forEach { (joinTableColumn, onColumn, joinMode) ->
+            if (joinMode.sql.isNotEmpty()) {
+                append(" ")
+                append(joinMode.sql)
+            }
+            append(" join ")
+            append(joinTableColumn.escapeTable)
+            append(" on ")
+            append(joinTableColumn)
+            append("=")
+            append(onColumn)
+        }
+    }
+
+    private fun StringBuilder.buildFilter(where: WherePart?, params: MutableList<Any?>) {
+        where?.let {
+            val whereString = WhereBuilder(buildOptions, buildOptions.paramPlaceholder, params).build(it)
+            if (whereString.isNotEmpty()) {
+                append(" where ")
+                append(whereString)
+            }
+        }
+    }
+
+    private fun StringBuilder.buildGroupBy(groupByColumns: Set<Column>, having: WherePart?, params: MutableList<Any?>) {
+        if (groupByColumns.isNotEmpty()) {
+            append(" group by ")
+            appendWithDelimiter(groupByColumns.map { it.toString() })
+            having?.let {
                 val whereString = WhereBuilder(buildOptions, buildOptions.paramPlaceholder, params).build(it)
                 if (whereString.isNotEmpty()) {
-                    append(" where ")
+                    append(" having ")
                     append(whereString)
                 }
             }
+        }
+    }
 
-            if (groupByColumns.isNotEmpty()) {
-                append(" group by ")
-                appendWithDelimiter(groupByColumns.map { it.toString() })
-                having?.let {
-                    val whereString = WhereBuilder(buildOptions, buildOptions.paramPlaceholder, params).build(it)
-                    if (whereString.isNotEmpty()) {
-                        append(" having ")
-                        append(whereString)
-                    }
+    private fun StringBuilder.buildSort(sort: Collection<Sort>) {
+        if (sort.isNotEmpty()) {
+            append(" order by ")
+            appendWithDelimiter(sort.map { "${it.column}${if (it.asc) "" else " desc"}" })
+        }
+    }
+
+    private fun StringBuilder.buildLimit(limit: Limit?, sort: Collection<Sort>) {
+        limit?.let {
+            if (dialect != SqlDialect.MS_SQL) {
+                if (it.count > 0) {
+                    append(" limit ")
+                    append(it.count)
                 }
-            }
-
-            if (sort.isNotEmpty()) {
-                append(" order by ")
-                appendWithDelimiter(sort.map { "${it.column}${if (it.asc) "" else " desc"}" })
-            }
-
-            limit?.let {
-                if (dialect != SqlDialect.MS_SQL) {
+                if (it.offset > 0) {
+                    append(" offset ")
+                    append(it.offset)
+                }
+            } else {
+                if (sort.isEmpty()) {
+                    throw KodbqException("Cant use limit/offset without sort in MS_SQL")
+                }
+                if(it.count > 0 || it.offset > 0) {
+                    append(" offset ")
+                    append(it.offset)
+                    append(" rows")
                     if (it.count > 0) {
-                        append(" limit ")
+                        append(" fetch next ")
                         append(it.count)
-                    }
-                    if (it.offset > 0) {
-                        append(" offset ")
-                        append(it.offset)
-                    }
-                } else {
-                    if (sort.isEmpty()) {
-                        throw KodbqException("Cant use limit/offset without sort in MS_SQL")
-                    }
-                    if(it.count > 0 || it.offset > 0) {
-                        append(" offset ")
-                        append(it.offset)
-                        append(" rows")
-                        if (it.count > 0) {
-                            append(" fetch next ")
-                            append(it.count)
-                            append(" rows only")
-                        }
+                        append(" rows only")
                     }
                 }
             }

@@ -2,14 +2,12 @@ package io.hatis.kodbq.vertx.jdbc
 
 import io.hatis.kodbq.InsertBuilder
 import io.hatis.kodbq.SqlBuilder
-import io.hatis.kodbq.SqlDialect
-import io.hatis.kodbq.defaultBuildOptions
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
-import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
+import io.vertx.sqlclient.SqlClient
 import io.vertx.sqlclient.Tuple
 
 fun execute(sqlClient: SqlClient, sqlAndParams: Pair<String, List<Any?>>, handler: Handler<AsyncResult<RowSet<Row>>>) {

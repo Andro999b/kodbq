@@ -1,13 +1,8 @@
 package io.hatis.kodbq.spring.jdbc
 
 import io.hatis.kodbq.*
-import org.springframework.jdbc.core.ColumnMapRowMapper
-import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.PreparedStatementCallback
-import org.springframework.jdbc.core.RowMapper
-import org.springframework.jdbc.core.RowMapperResultSetExtractor
+import org.springframework.jdbc.core.*
 import org.springframework.jdbc.support.JdbcUtils
-import java.sql.SQLException
 import java.sql.Statement
 
 private fun update(template: JdbcTemplate, sqlAndParams: Pair<String, List<Any?>>): Int {

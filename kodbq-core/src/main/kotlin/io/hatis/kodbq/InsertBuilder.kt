@@ -5,7 +5,7 @@ class InsertBuilder(
     override val dialect: SqlDialect = SqlDialect.PG,
     val values: List<Map<Column, Any?>>,
     val generatedKeys: Set<String> = emptySet()
-): AbstractSqlBuilder() {
+) : AbstractSqlBuilder() {
     private fun buildColumnsAndValue(
         outParams: MutableList<Any?>,
         columns: Set<Map.Entry<Column, Any?>>
@@ -30,16 +30,16 @@ class InsertBuilder(
         outParams: MutableList<Any?>,
         columns: Set<Map.Entry<Column, Any?>>
     ) = columns.forEach { (_, value) ->
-            if (value is NativeSqlColumn) {
-                value.generate(
-                    NativeSqlColumn.Usage.INSERT,
-                    outParams = outParams,
-                    paramPlaceholder = buildOptions.paramPlaceholder
-                )
-            } else {
-                outParams.add(value)
-            }
+        if (value is NativeSqlColumn) {
+            value.generate(
+                NativeSqlColumn.Usage.INSERT,
+                outParams = outParams,
+                paramPlaceholder = buildOptions.paramPlaceholder
+            )
+        } else {
+            outParams.add(value)
         }
+    }
 
     override fun buildSqlAndParams(): Pair<String, List<List<Any?>>> {
         val valuesItr = values.listIterator()
@@ -48,10 +48,11 @@ class InsertBuilder(
         val keyValues = buildColumnsAndValue(firstParams, firstRow.entries)
         var sql = "insert into ${dialect.escape(tableName)}(${keyValues.joinToString(",") { it.first.toString() }})"
 
-        if (buildOptions.generatedKeysSql && generatedKeys.isNotEmpty()) {
-            if (dialect == SqlDialect.MS_SQL) {
-                sql += " output ${generatedKeys.joinToString(",") { "inserted.${dialect.escape(it)}" }}"
-            }
+        if (buildOptions.generatedKeysSql &&
+            generatedKeys.isNotEmpty() &&
+            dialect == SqlDialect.MS_SQL
+        ) {
+            sql += " output ${generatedKeys.joinToString(",") { "inserted.${dialect.escape(it)}" }}"
         }
 
         sql += " values(${keyValues.joinToString(",") { it.second.toString() }})"
@@ -59,10 +60,11 @@ class InsertBuilder(
         val params = mutableListOf<List<Any?>>()
         params += firstParams
 
-        if (buildOptions.generatedKeysSql && generatedKeys.isNotEmpty()) {
-            if (dialect == SqlDialect.PG) {
-                sql += " returning ${generatedKeys.joinToString(",", transform = dialect.escape)}"
-            }
+        if (buildOptions.generatedKeysSql &&
+            generatedKeys.isNotEmpty() &&
+            dialect == SqlDialect.PG
+        ) {
+            sql += " returning ${generatedKeys.joinToString(",", transform = dialect.escape)}"
         }
 
         valuesItr.forEach {

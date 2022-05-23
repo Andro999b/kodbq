@@ -41,37 +41,8 @@ internal class WhereBuilder(
 
     private fun buildRecursive(wherePart: WherePart, depth: Int = 0) {
         when (wherePart) {
-            is WhereJoint ->
-                when {
-                    wherePart.parts.size == 1 ->
-                        buildRecursive(wherePart.parts.first(), depth + 1)
-                    wherePart.parts.size > 1 -> {
-                        if (depth != 0) builder.append("(")
-                        var lastLength = builder.length
-                        wherePart.parts.forEachIndexed { index, p ->
-                            if (index != 0 && lastLength != builder.length) {
-                                builder.append(" ").append(wherePart.separator).append(" ")
-                                lastLength = builder.length
-                            }
-                            buildRecursive(p, depth + 1)
-                        }
-                        if (depth != 0) builder.append(")")
-                    }
-                }
-            is WhereColumn -> {
-                when (wherePart.op) {
-                    WhereOps.IN -> buildInPart(wherePart)
-                    else -> {
-                        outParams.add(wherePart.value)
-                        val column = wherePart.column.sql
-                        val placeholder = paramPlaceholder(outParams.size + paramsIndexOffset)
-                        builder
-                            .append(column)
-                            .append(wherePart.op.op)
-                            .append(placeholder)
-                    }
-                }
-            }
+            is WhereJoint -> buildConditionsJoin(wherePart, depth)
+            is WhereColumn -> buildColumnCondition(wherePart)
             is WhereColumnIsNotNull -> builder.append(wherePart.column.sql).append(" is not null")
             is WhereColumnIsNull -> builder.append(wherePart.column.sql).append(" is null")
             is WhereGeneratedSql -> {
@@ -82,6 +53,39 @@ internal class WhereBuilder(
                         paramPlaceholder,
                     )
                 )
+            }
+        }
+    }
+
+    private fun buildColumnCondition(wherePart: WhereColumn) {
+        when (wherePart.op) {
+            WhereOps.IN -> buildInPart(wherePart)
+            else -> {
+                outParams.add(wherePart.value)
+                val column = wherePart.column.sql
+                val placeholder = paramPlaceholder(outParams.size + paramsIndexOffset)
+                builder
+                    .append(column)
+                    .append(wherePart.op.op)
+                    .append(placeholder)
+            }
+        }
+    }
+
+    private fun buildConditionsJoin(wherePart: WhereJoint, depth: Int) {
+        when {
+            wherePart.parts.size == 1 -> buildRecursive(wherePart.parts.first(), depth + 1)
+            wherePart.parts.size > 1 -> {
+                if (depth != 0) builder.append("(")
+                var lastLength = builder.length
+                wherePart.parts.forEachIndexed { index, p ->
+                    if (index != 0 && lastLength != builder.length) {
+                        builder.append(" ").append(wherePart.separator).append(" ")
+                        lastLength = builder.length
+                    }
+                    buildRecursive(p, depth + 1)
+                }
+                if (depth != 0) builder.append(")")
             }
         }
     }
