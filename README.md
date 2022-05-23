@@ -6,6 +6,7 @@ Library also provide ready to use integration with various db libs/frameworks.
 
 [![Testing](https://github.com/Andro999b/kodbq/actions/workflows/testing.yaml/badge.svg)](https://github.com/Andro999b/kodbq/actions/workflows/testing.yaml)
 [![](https://jitpack.io/v/Andro999b/kodbq.svg)](https://jitpack.io/#Andro999b/kodbq)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Andro999b_kodbq&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Andro999b_kodbq)
 
 # Table of Content
 - [Supported Integrations](#supported-integrations)
