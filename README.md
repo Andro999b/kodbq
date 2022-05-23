@@ -217,7 +217,7 @@ sqlSelect("users") {
     range(10, 30)
 }
 ```
-**NOTE:** When working with MS_SQL dialed it is mandatory to specify sort:
+**NOTE:** When working with MS_SQL dialect it is mandatory to specify sort:
 ```kotlin
 sqlSelect("users", dialect = SqlDailect.MS_SQL) {
     sort("id")
