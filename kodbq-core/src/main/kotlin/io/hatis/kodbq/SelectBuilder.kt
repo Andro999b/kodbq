@@ -36,10 +36,10 @@ class SelectBuilder(
         val params = mutableListOf<Any?>()
         val sql = buildString {
             selects.forEachIndexed { index, select ->
-                if(index > 0 ) {
+                if (index > 0) {
                     append("\n")
                     append("union")
-                    if(select.unionAll) append(" all")
+                    if (select.unionAll) append(" all")
                     append("\n")
                 }
                 buildSelect(select, params)
@@ -69,7 +69,12 @@ class SelectBuilder(
             buildFilter(where, params)
             buildGroupBy(groupByColumns, having, params)
             buildSort(sort)
-            buildLimit(limit, sort)
+
+            if (dialect == SqlDialect.MS_SQL) {
+                buildMSSQLLimit(limit, sort)
+            } else {
+                buildLimit(limit)
+            }
         }
     }
 
@@ -119,30 +124,32 @@ class SelectBuilder(
         }
     }
 
-    private fun StringBuilder.buildLimit(limit: Limit?, sort: Collection<Sort>) {
+    private fun StringBuilder.buildLimit(limit: Limit?) {
         limit?.let {
-            if (dialect != SqlDialect.MS_SQL) {
+            if (it.count > 0) {
+                append(" limit ")
+                append(it.count)
+            }
+            if (it.offset > 0) {
+                append(" offset ")
+                append(it.offset)
+            }
+        }
+    }
+
+    private fun StringBuilder.buildMSSQLLimit(limit: Limit?, sort: Collection<Sort>) {
+        limit?.let {
+            if (sort.isEmpty()) {
+                throw KodbqException("Cant use limit/offset without sort in MS_SQL")
+            }
+            if (it.count > 0 || it.offset > 0) {
+                append(" offset ")
+                append(it.offset)
+                append(" rows")
                 if (it.count > 0) {
-                    append(" limit ")
+                    append(" fetch next ")
                     append(it.count)
-                }
-                if (it.offset > 0) {
-                    append(" offset ")
-                    append(it.offset)
-                }
-            } else {
-                if (sort.isEmpty()) {
-                    throw KodbqException("Cant use limit/offset without sort in MS_SQL")
-                }
-                if(it.count > 0 || it.offset > 0) {
-                    append(" offset ")
-                    append(it.offset)
-                    append(" rows")
-                    if (it.count > 0) {
-                        append(" fetch next ")
-                        append(it.count)
-                        append(" rows only")
-                    }
+                    append(" rows only")
                 }
             }
         }
