@@ -444,7 +444,7 @@ sql {
 
 ## SQL Dialect
 By default, library generate syntax compatible with SQL92 specification.
-By for some DB you will need set SQL Dialect (MSQL). There is 2 ways to specify sql dialect:
+But for some DB you will need set SQL Dialect (MSSQL,MySQL). There is 2 ways to specify sql dialect:
 
 Globally:
 
