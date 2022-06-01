@@ -1,7 +1,7 @@
 package io.hatis.kodbq
 
 class DeleteBuilder(
-    val tableName: String,
+    val table: Table,
     val where: WherePart?,
     override val dialect: SqlDialect = SqlDialect.PG
 ): AbstractSqlBuilder() {
@@ -11,9 +11,9 @@ class DeleteBuilder(
 
         val sql = if(where != null) {
             val wherePart = WhereBuilder(buildOptions, buildOptions.paramPlaceholder, params).build(where)
-            "delete from ${escape(tableName)} where $wherePart"
+            "delete from ${escape(table.name)} where $wherePart"
         } else {
-            "delete from ${escape(tableName)}"
+            "delete from ${escape(table.name)}"
         }
 
         return sql to params

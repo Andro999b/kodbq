@@ -1,29 +1,45 @@
 package io.hatis.kodbq
 
-open class DSLReturnsBuilder(
-    dialect: SqlDialect,
-    tableName: String,
-    functions: MutableMap<String, Function> = mutableMapOf(),
-    protected val columns: MutableSet<Column> = mutableSetOf()
-): DSLFunctionsBuilder(dialect, tableName, functions) {
+class DSLReturnsBuilder(private val dialect: SqlDialect) {
 
-    fun column(name: String) {
-        columns += Column(name, dialect, tableName)
+    private val functions: MutableMap<String, Function> = mutableMapOf()
+    private val columns: MutableSet<Column> = mutableSetOf()
+
+    fun count(alias: String) {
+        functions[alias] = SimpleFunction("count", Column("*", dialect, alias = alias))
+    }
+    fun count(c: ColumnDefinition, alias: String) = function("count", c, alias)
+    fun max(c: ColumnDefinition, alias: String) = function("max", c, alias)
+    fun min(c: ColumnDefinition, alias: String) = function("min", c, alias)
+    fun avg(c: ColumnDefinition, alias: String) = function("avg", c, alias)
+    fun sum(c: ColumnDefinition, alias: String) = function("sum", c, alias)
+
+    fun function(function: String, c: ColumnDefinition, alias: String) {
+        functions[alias] = SimpleFunction(function, c.toColunm(dialect, alias))
     }
 
-    fun column(name: String, alias: String) {
-        columns += Column(name, dialect, tableName, alias)
+    fun native(alias: String, actions: NativeSql.Generator.() -> String) {
+        functions[alias] = NativeFunction(NativeSql(dialect, actions))
     }
 
-    fun columns(names: Set<String>) {
-        columns.addAll(names.map { Column(it, dialect, tableName) })
+    fun column(cd: ColumnDefinition) {
+        columns += cd.toColunm(dialect)
     }
 
-    fun columns(vararg names: String) {
-        columns.addAll(names.toSet().map { Column(it, dialect, tableName) })
+    fun column(cd: ColumnDefinition, alias: String) {
+        columns += cd.toColunm(dialect, alias)
     }
 
-    fun columns(vararg names: Pair<String, String>) {
-        columns.addAll(names.map { Column(it.first, dialect, tableName, alias = it.second) })
+    fun columns(vararg cds: ColumnDefinition) {
+        columns.addAll(cds.toSet().map { it.toColunm(dialect) })
     }
+
+    fun columns(cds: Set<ColumnDefinition>) {
+        columns.addAll(cds.map { it.toColunm(dialect) })
+    }
+
+    fun columns(vararg cds: Pair<ColumnDefinition, String>) {
+        columns.addAll(cds.map { it.first.toColunm(dialect, alias = it.second) })
+    }
+    internal fun createReturns() = SelectBuilder.Returns(columns, functions)
 }

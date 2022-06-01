@@ -1,14 +1,14 @@
 package io.hatis.kodbq
 
-class DSLUnionSelectBuilder(tableName: String, dialect: SqlDialect): DSLSelectBuilder(tableName, dialect) {
+class DSLUnionSelectBuilder(table: Table, dialect: SqlDialect): DSLSelectBuilder(table, dialect) {
     private val unions = mutableListOf<Pair<DSLSelectBuilder, Boolean>>()
 
     fun union(all: Boolean = false, builderActions: DSLSelectBuilder.() -> Unit) {
-        union(tableName, all, builderActions)
+        union(table, all, builderActions)
     }
 
-    fun union(tableName: String, all: Boolean = false, builderActions: DSLSelectBuilder.() -> Unit) {
-        val dslSelectBuilder = DSLSelectBuilder(tableName, dialect)
+    fun union(table: Table, all: Boolean = false, builderActions: DSLSelectBuilder.() -> Unit) {
+        val dslSelectBuilder = DSLSelectBuilder(table, dialect)
         dslSelectBuilder.builderActions()
         unions += dslSelectBuilder to all
     }

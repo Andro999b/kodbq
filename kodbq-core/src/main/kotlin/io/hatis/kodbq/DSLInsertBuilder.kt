@@ -1,14 +1,14 @@
 package io.hatis.kodbq
 
 class DSLInsertBuilder(
-    private val tableName: String,
-    private val mode: SqlDialect
+    private val table: Table,
+    private val dialect: SqlDialect
 ) {
     private var values: MutableList<Map<Column, Any?>> = mutableListOf()
     private var genKeys: Set<String> = emptySet()
 
     fun values(builderActions: DSLUpdateColumnsBuilder.() -> Unit) {
-        val dslColumnsBuilder = DSLUpdateColumnsBuilder(mode)
+        val dslColumnsBuilder = DSLUpdateColumnsBuilder(table, dialect)
         dslColumnsBuilder.builderActions()
         values.add(dslColumnsBuilder.columns)
     }
@@ -18,8 +18,8 @@ class DSLInsertBuilder(
     }
 
     internal fun createInsertBuilder() = InsertBuilder(
-        tableName = tableName,
-        dialect = mode,
+        table = table,
+        dialect = dialect,
         values = values,
         generatedKeys = genKeys
     )

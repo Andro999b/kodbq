@@ -51,7 +51,7 @@ class TestUpdate: StringSpec({
         val price = 15.0
         updateOrder(orderId, article, price)
             .expectSqlAndParams(
-                "update \"orders\" set \"article\"=?,\"price\"=? where \"id\"=?",
+                "update \"orders\" set \"article\"=?,\"price\"=? where \"orders\".\"id\"=?",
                 listOf(article, price, orderId)
             )
     }
@@ -59,7 +59,7 @@ class TestUpdate: StringSpec({
         val orderId = 1L
         deleteOrder(orderId)
             .expectSqlAndParams(
-                "delete from \"orders\" where \"id\"=?",
+                "delete from \"orders\" where \"orders\".\"id\"=?",
                 listOf(orderId)
             )
     }
@@ -70,7 +70,7 @@ class TestUpdate: StringSpec({
         )
         deleteOrdersWithDateRanges(ranges)
             .expectSqlAndParams(
-                "delete from \"orders\" where (\"created\">? and \"created\"<?) or (\"created\">? and \"created\"<?)",
+                "delete from \"orders\" where (\"orders\".\"created\">? and \"orders\".\"created\"<?) or (\"orders\".\"created\">? and \"orders\".\"created\"<?)",
                 ranges.flatMap { listOf(it.first, it.second) }
             )
     }

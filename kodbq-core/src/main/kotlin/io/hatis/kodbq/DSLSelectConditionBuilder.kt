@@ -1,19 +1,15 @@
 package io.hatis.kodbq
 
-class DSLSelectConditionBuilder(dialect: SqlDialect, tableName: String? = null) :
-    DSLConditionBuilder(dialect, tableName, And()) {
-    fun table(tableOrAliasName: String, builderActions: DSLConditionBuilder.() -> Unit) {
-        DSLConditionBuilder(dialect, tableOrAliasName, andJoint).builderActions()
-    }
+class DSLSelectConditionBuilder(dialect: SqlDialect) : DSLConditionBuilder(dialect) {
 
     fun or(builderActions: DSLSelectConditionBuilder.() -> Unit) {
-        val builder = DSLSelectConditionBuilder(dialect, tableName)
+        val builder = DSLSelectConditionBuilder(dialect)
         builder.builderActions()
         orJoint.parts.add(builder.createWhereCondition())
     }
 
     fun and(builderActions: DSLSelectConditionBuilder.() -> Unit) {
-        val builder = DSLSelectConditionBuilder(dialect, tableName)
+        val builder = DSLSelectConditionBuilder(dialect)
         builder.builderActions()
         andJoint.parts.add(builder.createWhereCondition())
     }

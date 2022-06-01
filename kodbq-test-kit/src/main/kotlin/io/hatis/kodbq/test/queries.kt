@@ -3,200 +3,218 @@ package io.hatis.kodbq.test
 import io.hatis.kodbq.*
 import java.time.OffsetDateTime
 
-fun selectAllUsers() = sqlSelect("users")
-fun countUsers() = sqlSelect("users") {
+object Users : Table("users") {
+    val id = column("id")
+    val name = column("name")
+    val age = column("age")
+    val created = column("created")
+    val deleted = column("deleted")
+}
+
+object Orders : Table("orders") {
+    val id = column("id")
+    val created = column("created")
+    val userId = column("user_id")
+    val price = column("price")
+    val article = column("article")
+    val userRef = userId refernce Users.id
+}
+
+object OrderStatus : Table("order_status") {
+    val orderId = column("order_id")
+    val status = column("status")
+    val ordersRef = orderId refernce Orders.id
+}
+
+fun selectAllUsers() = sqlSelect(Users)
+fun countUsers() = sqlSelect(Users) {
     returns { count("count") }
 }
 
-fun selectUsersNames() = sqlSelect("users") {
+fun selectUsersNames() = sqlSelect(Users) {
     distinct()
-    returns { column("name") }
+    returns { column(Users.name) }
 }
 
-fun selectByUserId(userId: Long) = sqlSelect("users") {
-    where { id(userId) }
+fun selectByUserId(userId: Long) = sqlSelect(Users) {
+    where { column(Users.id, userId) }
 }
 
-fun selectByUserIds(userId: List<Long>) = sqlSelect("users") {
-    where { columns("id" to userId) }
+fun selectByUserIds(userId: List<Long>) = sqlSelect(Users) {
+    where { columns(Users.id to userId) }
 }
 
-fun selectUsersWithOffset(offset: Int, limit: Int) = sqlSelect("users") {
-    sort { asc("id") }
+fun selectUsersWithOffset(offset: Int, limit: Int) = sqlSelect(Users) {
+    sort { asc(Users.id) }
     offset(offset)
     limit(limit)
 }
 
-fun selectUsersInRange(from: Int, to: Int) = sqlSelect("users") {
-    sort { asc("id") }
+fun selectUsersInRange(from: Int, to: Int) = sqlSelect(Users) {
+    sort { asc(Users.id) }
     range(from, to)
 }
 
-fun selectUserAgeBetween(from: Int, to: Int) = sqlSelect("users") {
+fun selectUserAgeBetween(from: Int, to: Int) = sqlSelect(Users) {
     where {
-        column("age") gte from
+        column(Users.age) gte from
         and {
-            column("age") lte to
+            column(Users.age) lte to
         }
     }
 }
 
-fun selectUserWithNameLike(name: String) = sqlSelect("users") {
+fun selectUserWithNameLike(name: String) = sqlSelect(Users) {
     where {
-        column("name") like name
+        column(Users.name) like name
     }
 }
 
-fun selectDeletedUsers() = sqlSelect("users") {
+fun selectDeletedUsers() = sqlSelect(Users) {
     where {
-        columnNotNull("deleted")
+        columnNotNull(Users.deleted)
     }
 }
 
-fun selectUsersNameAndAge() = sqlSelect("users") {
+fun selectUsersNameAndAge() = sqlSelect(Users) {
     returns {
-        columns("name")
-        columns("age" to "userAge")
+        columns(Users.name)
+        columns(Users.age to "userAge")
     }
 }
 
-fun selectOrderSince(time: OffsetDateTime) = sqlSelect("orders") {
+fun selectOrderSince(time: OffsetDateTime) = sqlSelect(Orders) {
     where {
-        column("created") gt time
+        column(Orders.created) gt time
     }
 }
 
-fun selectOrderUntil(time: OffsetDateTime) = sqlSelect("orders") {
+fun selectOrderUntil(time: OffsetDateTime) = sqlSelect(Orders) {
     where {
-        column("created") lt time
+        column(Orders.created) lt time
     }
 }
 
-fun selectOrderById(id: Long) = sqlSelect("orders") { where { id(id) } }
+fun selectOrderById(id: Long) = sqlSelect(Orders) { where { column(Orders.id, id) } }
 
-fun selectUserOrders(userId: Long) = sqlSelect("orders") {
+fun selectUserOrders(userId: Long) = sqlSelect(Orders) {
     returns {
-        columns("id" to "orderid")
-        table("users") {
-            column("name")
-            column("id", "userid")
-        }
+        columns(Orders.id to "orderid")
+        column(Users.name)
+        column(Users.id, "userid")
     }
-    join("users", "id") on "user_id"
-    where { column("user_id") eq userId }
+    join(Users.id) on Orders.userId
+    where { column(Orders.userId) eq userId }
 }
 
-fun selectUsersWithOrderMinPrice(minPrice: Int) = sqlSelect("orders") {
-    groupBy("user_id")
+fun selectUsersWithOrderMinPrice(minPrice: Int) = sqlSelect(Orders) {
+    groupBy(Orders.userId)
     having {
-        max("price") gte minPrice
+        max(Orders.price) gte minPrice
     }
 }
 
-fun selectUsersOrdersFrom(from: OffsetDateTime) = sqlSelect("orders") {
+fun selectUsersOrdersFrom(from: OffsetDateTime) = sqlSelect(Orders) {
     returns {
-        columns("id" to "orderid")
-        columns(setOf("article", "price"))
-        table("users") {
-            column("name")
-            column("id", "userid")
-        }
-        table("order_status") {
-            column("status", "order_status")
-        }
+        columns(Orders.id to "orderid")
+        columns(setOf(Orders.article, Orders.price, Users.name))
+        column(Users.id, "userid")
+        column(OrderStatus.status, "order_status")
     }
-    join("users", "id") on "user_id"
-    join("order_status", "order_id").on("orders", "id")
+    join(Users.id) on Orders.userId
+    join(OrderStatus.ordersRef)
     where {
-        column("created") gte from
-        table("users") { column("deleted").isNull() }
+        column(Orders.created) gte from
+        column(Users.deleted).isNull()
     }
 }
 
-fun selectUsersOrdersCount() = sqlSelect("users") {
+fun selectUsersOrdersCount() = sqlSelect(Users) {
     returns {
-        column("name")
-        table("orders") { count("count") }
+        column(Users.name)
+        count("count")
     }
-    rightJoin("orders", "user_id") on "id"
-    groupBy("id", "name")
-    sort { asc("id") }
+    rightJoin(Orders.userRef)
+    groupBy(Users.id, Users.name)
+    sort { asc(Users.id) }
 }
 
-fun selectUsersAvgOrderPrice() = sqlSelect("users") {
+fun selectUsersAvgOrderPrice() = sqlSelect(Users) {
     returns {
-        column("name")
-        table("orders") { avg("price", "avg_price")}
+        column(Users.name)
+        avg(Orders.price, "avg_price")
     }
-    rightJoin("orders", "user_id") on "id"
-    groupBy("id","name")
-    sort { asc("id") }
+    rightJoin(Orders.userRef)
+    groupBy(Users.id, Users.name)
+    sort { asc(Users.id) }
 }
 
-fun selectUsersSortedByAgeAndCreated() = sqlSelect("users") {
+fun selectUsersSortedByAgeAndCreated() = sqlSelect(Users) {
     sort {
-        desc("age")
-        asc("created")
+        desc(Users.age)
+        asc(Users.created)
     }
 }
 
-fun selectOrdersByCreatedAndPrice() = sqlSelect("orders") {
-    sort { asc("created", "price") }
+fun selectOrdersByCreatedAndPrice() = sqlSelect(Orders) {
+    sort { asc(Orders.created, Orders.price) }
 }
 
-fun selectUsersWithAgeInRanges(ranges: Collection<IntRange>) = sqlSelect("users") {
+fun selectUsersWithAgeInRanges(ranges: Collection<IntRange>) = sqlSelect(Users) {
     where {
         ranges.forEach { range ->
             or {
-                column("age") gte range.first
-                column("age") lte range.last
+                column(Users.age) gte range.first
+                column(Users.age) lte range.last
             }
         }
     }
 }
 
-fun selectUserIdsOfLaptopAndChargerOrders() = sqlSelect("orders") {
-    where { column("article", "laptop") }
+fun selectUserIdsOfLaptopAndChargerOrders() = sqlSelect(Orders) {
+    where { column(Orders.article, "laptop") }
     union(all = true) {
-        where { column("article", "charger") }
+        where { column(Orders.article, "charger") }
     }
 }
 
-fun insertOrders(orders: Collection<TestOrder>, returnIds: Boolean = true) = sqlInsert("orders") {
+fun insertOrders(orders: Collection<TestOrder>, returnIds: Boolean = true) = sqlInsert(Orders) {
     orders.forEach {
         values {
-            column("user_id", it.userId)
-            columns(mapOf(
-                "article" to it.article,
-                "price" to it.price
-            ))
-            native("created") { if(dialect == SqlDialect.MS_SQL) "getdate()" else "now()" }
+            column(Orders.userId, it.userId)
+            columns(
+                mapOf(
+                    Orders.article to it.article,
+                    Orders.price to it.price
+                )
+            )
+            native(Orders.created) { if (dialect == SqlDialect.MS_SQL) "getdate()" else "now()" }
         }
     }
-    if(returnIds) generatedKeys("id")
+    if (returnIds) generatedKeys("id")
 }
 
-fun updateOrder(orderId: Long, article: String, price: Double) = sqlUpdate("orders") {
+fun updateOrder(orderId: Long, article: String, price: Double) = sqlUpdate(Orders) {
     set {
         columns(
-            "article" to article,
-            "price" to price
+            Orders.article to article,
+            Orders.price to price
         )
     }
-    where { id(orderId) }
+    where { column(Orders.id, orderId) }
 }
 
-fun deleteOrder(orderId: Long) = sqlDelete("orders") {
-    where { id(orderId) }
+fun deleteOrder(orderId: Long) = sqlDelete(Orders) {
+    where { column(Orders.id, orderId) }
 }
 
-fun deleteOrdersWithDateRanges(ranges: Collection<Pair<OffsetDateTime, OffsetDateTime>>) = sqlDelete("orders") {
+fun deleteOrdersWithDateRanges(ranges: Collection<Pair<OffsetDateTime, OffsetDateTime>>) = sqlDelete(Orders) {
     where {
-        ranges.forEach {(first, second) ->
+        ranges.forEach { (first, second) ->
             or {
-                column("created") gt first
+                column(Orders.created) gt first
                 and {
-                    column("created") lt second
+                    column(Orders.created) lt second
                 }
             }
         }

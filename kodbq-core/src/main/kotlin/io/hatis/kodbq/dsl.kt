@@ -3,46 +3,46 @@ package io.hatis.kodbq
 var kodbqDialect = SqlDialect.SQL92
 
 fun sqlInsert(
-    tableName: String,
+    table: Table,
     dialect: SqlDialect = kodbqDialect,
     builderActions: DSLInsertBuilder.() -> Unit
 ): InsertBuilder {
-    val dslInsertBuilder = DSLInsertBuilder(tableName, dialect)
+    val dslInsertBuilder = DSLInsertBuilder(table, dialect)
     dslInsertBuilder.builderActions()
     return dslInsertBuilder.createInsertBuilder()
 }
 
 fun sqlUpdate(
-    tableName: String,
+    table: Table,
     dialect: SqlDialect = kodbqDialect,
     builderActions: DSLUpdateBuilder.() -> Unit
 ): UpdateBuilder {
-    val dslInsertBuilder = DSLUpdateBuilder(dialect)
+    val dslInsertBuilder = DSLUpdateBuilder(table, dialect)
     dslInsertBuilder.builderActions()
-    return dslInsertBuilder.createUpdateBuilder(tableName)
+    return dslInsertBuilder.createUpdateBuilder()
 }
 
 fun sqlSelect(
-    tableName: String,
+    table: Table,
     dialect: SqlDialect = kodbqDialect,
     builderActions: (DSLUnionSelectBuilder.() -> Unit)? = null
 ): SelectBuilder {
-    val dslInsertBuilder = DSLUnionSelectBuilder(tableName, dialect)
+    val dslInsertBuilder = DSLUnionSelectBuilder(table, dialect)
     if(builderActions != null) dslInsertBuilder.builderActions()
     return dslInsertBuilder.createSelectBuilder()
 }
 
 fun sqlDelete(
-    tableName: String,
+    table: Table,
     dialect: SqlDialect = kodbqDialect,
-    builderActions: DSLDeleteBuilder.() -> Unit
+    builderActions: (DSLDeleteBuilder.() -> Unit)? = null
 ): DeleteBuilder {
-    val dslInsertBuilder = DSLDeleteBuilder(tableName, dialect)
-    dslInsertBuilder.builderActions()
+    val dslInsertBuilder = DSLDeleteBuilder(table, dialect)
+    if(builderActions != null) dslInsertBuilder.builderActions()
     return dslInsertBuilder.createDeleteBuilder()
 }
 
 fun sql(
     dialect: SqlDialect = kodbqDialect,
     generatorFun: NativeSql.Generator.() -> String
-) = QueryBuilder(NativeSql(dialect, null, generatorFun))
+) = QueryBuilder(NativeSql(dialect, generatorFun))

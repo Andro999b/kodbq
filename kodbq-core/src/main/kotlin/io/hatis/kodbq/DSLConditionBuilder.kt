@@ -1,22 +1,30 @@
 package io.hatis.kodbq
 
-open class DSLConditionBuilder(
-    protected val dialect: SqlDialect,
-    protected val tableName: String?,
-    protected var andJoint: And
-) {
-    protected val columnConditionBuilder = ColumnConditionBuilder(andJoint.parts, dialect)
+open class DSLConditionBuilder(protected val dialect: SqlDialect) {
+    protected val andJoint: And = And()
     protected val orJoint: Or = Or()
 
-    fun id(value: Any) {
-        column("id", value)
+    fun column(c: ColumnDefinition, value: Any) {
+        andJoint.parts += (WhereColumn(c.toColunm(dialect), WhereOps.EQ, value, dialect))
     }
 
-    fun column(columnName: String, value: Any) {
-        andJoint.parts += (WhereColumn(Column(columnName, dialect, tableName), WhereOps.EQ, value, dialect))
+    fun column(c: ColumnDefinition, value: Collection<*>) {
+        andJoint.parts += (WhereColumn(c.toColunm(dialect), WhereOps.IN, value, dialect))
     }
 
-    fun columns(vararg pairs: Pair<String, Any?>) {
+    fun column(c: ColumnDefinition): ColumnConditionBuilder {
+        return ColumnConditionBuilder(andJoint.parts, dialect, c.toColunm(dialect))
+    }
+    fun columnIsNull(c: ColumnDefinition) {
+        andJoint.parts += (WhereColumnIsNull(c.toColunm(dialect)))
+    }
+
+    fun columnNotNull(c: ColumnDefinition) {
+        andJoint.parts += (WhereColumnIsNotNull(c.toColunm(dialect)))
+    }
+
+
+    fun columns(vararg pairs: Pair<ColumnDefinition, Any?>) {
         pairs.forEach { (columnName, value) ->
             @Suppress("UNCHECKED_CAST")
             when (value) {
@@ -27,7 +35,7 @@ open class DSLConditionBuilder(
         }
     }
 
-    fun columns(map: Map<String, Any?>) {
+    fun columns(map: Map<ColumnDefinition, Any?>) {
         map.forEach { (columnName, value) ->
             @Suppress("UNCHECKED_CAST")
             when (value) {
@@ -38,26 +46,8 @@ open class DSLConditionBuilder(
         }
     }
 
-    fun column(columnName: String, value: Collection<*>) {
-        andJoint.parts += (WhereColumn(Column(columnName, dialect, tableName), WhereOps.IN, value, dialect))
-    }
-
-    fun column(columnName: String): ColumnConditionBuilder {
-        return columnConditionBuilder.apply {
-            column = Column(columnName, dialect, tableName)
-        }
-    }
-
-    fun columnIsNull(columnName: String) {
-        andJoint.parts += (WhereColumnIsNull(Column(columnName, dialect, tableName)))
-    }
-
-    fun columnNotNull(columnName: String) {
-        andJoint.parts += (WhereColumnIsNotNull(Column(columnName, dialect, tableName)))
-    }
-
     fun native(actions: NativeSql.Generator.() -> String) {
-        andJoint.parts += (WhereGeneratedSql(NativeSql(dialect, tableName, actions)))
+        andJoint.parts += (WhereGeneratedSql(NativeSql(dialect, actions)))
     }
 
     fun createWhereCondition(): WherePart =
@@ -70,9 +60,9 @@ open class DSLConditionBuilder(
 
     class ColumnConditionBuilder(
         private val parts: MutableList<WherePart>,
-        private val dialect: SqlDialect
+        private val dialect: SqlDialect,
+        private val column: Named
     ) {
-        internal lateinit var column: Named
         infix fun eq(value: Any) {
             parts += WhereColumn(column, WhereOps.EQ, value, dialect)
         }

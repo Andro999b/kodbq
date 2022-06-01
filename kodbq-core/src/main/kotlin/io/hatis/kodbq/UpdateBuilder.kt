@@ -1,7 +1,7 @@
 package io.hatis.kodbq
 
 class UpdateBuilder(
-    val tableName: String,
+    val table: Table,
     val columns: Map<Column, Any?>,
     val where: WherePart?,
     override val dialect: SqlDialect
@@ -27,7 +27,7 @@ class UpdateBuilder(
         val params = mutableListOf<Any?>()
         val whereParams = mutableListOf<Any?>()
 
-        var sql = "update ${dialect.escape(tableName)} set " + buildParams(params)
+        var sql = "update ${dialect.escape(table.name)} set " + buildParams(params)
 
         where?.let {
             val wherePart = WhereBuilder(buildOptions, buildOptions.paramPlaceholder, whereParams, params.size).build(it)

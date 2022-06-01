@@ -1,77 +1,94 @@
 package io.hatis.kodbq
 
 open class DSLSelectBuilder(
-    protected val tableName: String,
+    protected val table: Table,
     protected val dialect: SqlDialect
 ) {
     private var dslConditionBuilder: DSLSelectConditionBuilder? = null
-    private var dslReturnsBuilder: DSLTableReturnsBuilder? = null
+    private var dslReturnsBuilder: DSLReturnsBuilder? = null
     private var dslHavingBuilder: DSLHavingBuilder? = null
     private val joins: MutableList<SelectBuilder.Join> = mutableListOf()
-    private var dslSortBuilder: DSLTableSortBuilder? = null
+    private var dslSortBuilder: DSLSortBuilder? = null
     private var groupByColumns: MutableSet<Column> = mutableSetOf()
     private var limit: SelectBuilder.Limit? = null
     private var distinct: Boolean = false
-    private val joinBuilder = JoinBuilder(tableName, joins)
 
     fun distinct() {
         distinct = true
     }
 
-    fun returns(builderActions: DSLTableReturnsBuilder.() -> Unit) {
-        val dslReturnsBuilder = DSLTableReturnsBuilder(dialect, tableName)
+    fun returns(builderActions: DSLReturnsBuilder.() -> Unit) {
+        val dslReturnsBuilder = DSLReturnsBuilder(dialect)
         dslReturnsBuilder.builderActions()
         this.dslReturnsBuilder = dslReturnsBuilder
     }
 
-    fun join(joinTable: String, joinColumnName: String) = joinBuilder.apply {
-        joinColumn = Column(joinColumnName, dialect, joinTable)
-        joinMode = SelectBuilder.JoinMode.INNER
+    fun join(joinColumn: ColumnDefinition) = joinBuilder(
+        joinColumn.toColunm(dialect),
+        SelectBuilder.JoinMode.INNER
+    )
+
+    fun leftJoin(joinColumn: ColumnDefinition) = joinBuilder(
+        joinColumn.toColunm(dialect),
+        SelectBuilder.JoinMode.LEFT
+    )
+
+
+    fun rightJoin(joinColumn: ColumnDefinition) = joinBuilder(
+        joinColumn.toColunm(dialect),
+        SelectBuilder.JoinMode.RIGHT
+    )
+
+
+    fun fullJoin(joinColumn: ColumnDefinition) = joinBuilder(
+        joinColumn.toColunm(dialect),
+        SelectBuilder.JoinMode.FULL
+    )
+
+    fun join(rd: ReferenceDefinition) {
+        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.INNER)
+            .on(rd.referredColumnDefinition)
     }
 
-    fun leftJoin(joinTable: String, joinColumnName: String) = joinBuilder.apply {
-        joinColumn = Column(joinColumnName, dialect, joinTable)
-        joinMode = SelectBuilder.JoinMode.LEFT
+    fun leftJoin(rd: ReferenceDefinition) {
+        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.LEFT)
+            .on(rd.referredColumnDefinition)
     }
 
 
-    fun rightJoin(joinTable: String, joinColumnName: String) = joinBuilder.apply {
-        joinColumn = Column(joinColumnName, dialect, joinTable)
-        joinMode = SelectBuilder.JoinMode.RIGHT
+    fun rightJoin(rd: ReferenceDefinition) {
+        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.RIGHT)
+            .on(rd.referredColumnDefinition)
     }
 
 
-    fun fullJoin(joinTable: String, joinColumnName: String) = joinBuilder.apply {
-        joinColumn = Column(joinColumnName, dialect, joinTable)
-        joinMode = SelectBuilder.JoinMode.FULL
+    fun fullJoin(rd: ReferenceDefinition) {
+        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.FULL)
+            .on(rd.referredColumnDefinition)
     }
+
+    private fun joinBuilder(joinColumn: Column, joinMode: SelectBuilder.JoinMode) =
+        JoinBuilder(joins, joinColumn, joinMode)
 
     fun where(builderActions: DSLSelectConditionBuilder.() -> Unit) {
-        val dslConditionBuilder = DSLSelectConditionBuilder(dialect, tableName)
+        val dslConditionBuilder = DSLSelectConditionBuilder(dialect)
         dslConditionBuilder.builderActions()
 
         this.dslConditionBuilder = dslConditionBuilder
     }
 
-
-    fun groupBy(vararg columnNames: String) {
-        groupByTable(tableName, *columnNames)
-    }
-
-    fun groupByTable(tableName: String, vararg columnNames: String) {
-        columnNames.forEach {
-            groupByColumns += Column(it, dialect, tableName)
-        }
+    fun groupBy(vararg cds: ColumnDefinition) {
+        cds.forEach { groupByColumns += it.toColunm(dialect) }
     }
 
     fun having(builderActions: DSLHavingBuilder.() -> Unit) {
-        val dslHavingBuilder = DSLHavingBuilder(dialect, tableName)
+        val dslHavingBuilder = DSLHavingBuilder(dialect)
         dslHavingBuilder.builderActions()
         this.dslHavingBuilder = dslHavingBuilder
     }
 
-    fun sort(builderActions: DSLTableSortBuilder.() -> Unit) {
-        val dslSortBuilder = DSLTableSortBuilder(dialect, tableName)
+    fun sort(builderActions: DSLSortBuilder.() -> Unit) {
+        val dslSortBuilder = DSLSortBuilder(dialect)
         dslSortBuilder.builderActions()
         this.dslSortBuilder = dslSortBuilder
     }
@@ -92,7 +109,7 @@ open class DSLSelectBuilder(
     }
 
     internal fun createSelect(unionAll: Boolean) = SelectBuilder.Select(
-        tableName = tableName,
+        table = table,
         joins = joins,
         where = dslConditionBuilder?.createWhereCondition(),
         having = dslHavingBuilder?.createWhereCondition(),
@@ -104,16 +121,15 @@ open class DSLSelectBuilder(
         unionAll = unionAll
     )
 
-    class JoinBuilder(private val tableName: String, private val joins: MutableList<SelectBuilder.Join>) {
-        internal lateinit var joinColumn: Column
-        internal lateinit var joinMode: SelectBuilder.JoinMode
-
-        infix fun on(columnName: String) = on(tableName, columnName)
-
-        fun on(tableName: String, columnName: String) {
+    class JoinBuilder(
+        private val joins: MutableList<SelectBuilder.Join>,
+        private val joinColumn: Column,
+        private val joinMode: SelectBuilder.JoinMode
+    ) {
+        infix fun on(cd: ColumnDefinition) {
             joins += SelectBuilder.Join(
                 joinColumn,
-                Column(columnName, joinColumn.dialect, tableName),
+                cd.toColunm(joinColumn.dialect),
                 joinMode
             )
         }

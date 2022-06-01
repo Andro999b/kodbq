@@ -21,11 +21,8 @@ class NativeSqlColumn(
         private val paramPlaceholder: (Int) -> String
     ) {
         val dialect = column.dialect
-        fun column(name: String) = Column(name, column.dialect, table = column.table)
-        fun column(tableName: String, name: String) = Column(name, column.dialect, table = tableName)
-        fun c(name: String) = column(name)
-
-        fun c(tableName: String, name: String) = column(tableName, name)
+        fun column(cd: ColumnDefinition) = cd.toColunm(dialect)
+        fun c(cd: ColumnDefinition) = cd.toColunm(dialect)
 
         val c = column
 

@@ -20,7 +20,7 @@ class SelectBuilder(
     )
 
     data class Select(
-        val tableName: String,
+        val table: Table,
         val joins: Collection<Join>,
         val where: WherePart?,
         val having: WherePart?,
@@ -63,7 +63,7 @@ class SelectBuilder(
             }
 
             append(" from ")
-            append(escape(tableName))
+            append(escape(table.name))
 
             buildJoins(joins)
             buildFilter(where, params)

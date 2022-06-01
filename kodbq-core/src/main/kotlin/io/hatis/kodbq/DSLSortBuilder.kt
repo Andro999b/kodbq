@@ -1,30 +1,31 @@
 package io.hatis.kodbq
 
-open class DSLSortBuilder(
-    protected val dialect: SqlDialect,
-    protected val tableName: String,
+class DSLSortBuilder(
+    private val dialect: SqlDialect,
     internal val sortColumns: MutableSet<SelectBuilder.Sort> = mutableSetOf()
 ) {
-    fun count(asc: Boolean = true) = count("*", asc)
-    fun count(columnName: String, asc: Boolean = true) = function("count", columnName, asc)
-    fun max(columnName: String, asc: Boolean = true) = function("max", columnName, asc)
-    fun min(columnName: String, asc: Boolean = true) = function("min", columnName, asc)
-    fun avg(columnName: String, asc: Boolean = true) = function("avg", columnName, asc)
-    fun sum(columnName: String, asc: Boolean = true) = function("sum", columnName, asc)
+    fun count(asc: Boolean = true) {
+        sortColumns += SelectBuilder.Sort(SimpleFunction("count", Column("*", dialect)), asc)
+    }
+    fun count(c: ColumnDefinition, asc: Boolean = true) = function("count", c, asc)
+    fun max(c: ColumnDefinition, asc: Boolean = true) = function("max", c, asc)
+    fun min(c: ColumnDefinition, asc: Boolean = true) = function("min", c, asc)
+    fun avg(c: ColumnDefinition, asc: Boolean = true) = function("avg", c, asc)
+    fun sum(c: ColumnDefinition, asc: Boolean = true) = function("sum", c, asc)
 
-    fun function(function: String, columnName: String, asc: Boolean) {
-        sortColumns += SelectBuilder.Sort(SimpleFunction(function, Column(columnName, dialect, tableName)), asc)
+    fun function(function: String, c: ColumnDefinition, asc: Boolean) {
+        sortColumns += SelectBuilder.Sort(SimpleFunction(function, c.toColunm(dialect)), asc)
     }
 
-    fun asc(vararg columnName: String) {
-        columnName.forEach {
-            sortColumns += SelectBuilder.Sort(Column(it, dialect, tableName))
+    fun asc(vararg cds: ColumnDefinition) {
+        cds.forEach {
+            sortColumns += SelectBuilder.Sort(it.toColunm(dialect))
         }
     }
 
-    fun desc(vararg columnName: String) {
-        columnName.forEach {
-            sortColumns += SelectBuilder.Sort(Column(it, dialect, tableName), false)
+    fun desc(vararg cds: ColumnDefinition) {
+        cds.forEach {
+            sortColumns += SelectBuilder.Sort(it.toColunm(dialect), false)
         }
     }
 }

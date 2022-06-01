@@ -1,7 +1,7 @@
 package io.hatis.kodbq
 
 class InsertBuilder(
-    val tableName: String,
+    val table: Table,
     override val dialect: SqlDialect = SqlDialect.PG,
     val values: List<Map<Column, Any?>>,
     val generatedKeys: Set<String> = emptySet()
@@ -46,7 +46,7 @@ class InsertBuilder(
         val firstRow = valuesItr.next()
         val firstParams = mutableListOf<Any?>()
         val keyValues = buildColumnsAndValue(firstParams, firstRow.entries)
-        var sql = "insert into ${dialect.escape(tableName)}(${keyValues.joinToString(",") { it.first.toString() }})"
+        var sql = "insert into ${dialect.escape(table.name)}(${keyValues.joinToString(",") { it.first.toString() }})"
 
         if (buildOptions.generatedKeysSql &&
             generatedKeys.isNotEmpty() &&
