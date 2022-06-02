@@ -48,7 +48,7 @@ class TestNativeSql : StringSpec({
     }
     "insert native sql to where section" {
         sqlSelect(t1) {
-            join(t2.t1id) on t1.id
+            t2.t1id joinOn t1.id
             where {
                 native {
                     "${c(t1.c1)}=${column(t1.c2)}"

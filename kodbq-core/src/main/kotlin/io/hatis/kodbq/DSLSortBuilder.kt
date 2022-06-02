@@ -14,18 +14,18 @@ class DSLSortBuilder(
     fun sum(c: ColumnDefinition, asc: Boolean = true) = function("sum", c, asc)
 
     fun function(function: String, c: ColumnDefinition, asc: Boolean) {
-        sortColumns += SelectBuilder.Sort(SimpleFunction(function, c.toColunm(dialect)), asc)
+        sortColumns += SelectBuilder.Sort(SimpleFunction(function, c.toColumn(dialect)), asc)
     }
 
     fun asc(vararg cds: ColumnDefinition) {
         cds.forEach {
-            sortColumns += SelectBuilder.Sort(it.toColunm(dialect))
+            sortColumns += SelectBuilder.Sort(it.toColumn(dialect))
         }
     }
 
     fun desc(vararg cds: ColumnDefinition) {
         cds.forEach {
-            sortColumns += SelectBuilder.Sort(it.toColunm(dialect), false)
+            sortColumns += SelectBuilder.Sort(it.toColumn(dialect), false)
         }
     }
 }

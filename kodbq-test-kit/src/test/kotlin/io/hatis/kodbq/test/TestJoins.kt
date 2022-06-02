@@ -27,19 +27,19 @@ class TestJoins: StringSpec({
 
     "select with inner join" {
         sqlSelect(t1, SqlDialect.MY_SQL) {
-            join(t2.t1id) on t1.id
+            t2.t1id joinOn t1.id
         }
             .expectSqlAndParams("select * from `t1` join `t2` on `t2`.`t1_id`=`t1`.`id`")
     }
     "select with left join" {
         sqlSelect(t1, SqlDialect.MY_SQL) {
-            leftJoin(t2.t1id) on t1.id
+            t2.t1id leftJoinOn t1.id
         }
             .expectSqlAndParams("select * from `t1` left join `t2` on `t2`.`t1_id`=`t1`.`id`")
     }
     "select with right join" {
         sqlSelect(t1, SqlDialect.MY_SQL) {
-            rightJoin(t2.t1id) on t1.id
+            t2.t1id rightJoinOn t1.id
         }
             .expectSqlAndParams("select * from `t1` right join `t2` on `t2`.`t1_id`=`t1`.`id`")
     }
@@ -51,7 +51,7 @@ class TestJoins: StringSpec({
     }
     "select with multiple joins" {
         sqlSelect(t1, SqlDialect.MY_SQL) {
-            join(t2.t1id) on t1.id
+            t2.t1id joinOn t1.id
             leftJoin(t3.t2ref)
         }
             .expectSqlAndParams("select * from `t1` join `t2` on `t2`.`t1_id`=`t1`.`id` left join `t3` on `t3`.`t2_id`=`t2`.`id`")

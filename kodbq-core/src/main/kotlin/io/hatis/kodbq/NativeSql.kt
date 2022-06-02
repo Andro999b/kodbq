@@ -18,7 +18,7 @@ class NativeSql(
     ) {
         fun table(td: Table) = dialect.escape(td.name)
         fun t(td: Table) = table(td)
-        fun column(cd: ColumnDefinition) = cd.toColunm(dialect)
+        fun column(cd: ColumnDefinition) = cd.toColumn(dialect)
         fun c(cd: ColumnDefinition) = column(cd)
         fun value(v: Any): String {
             outParams.add(v)

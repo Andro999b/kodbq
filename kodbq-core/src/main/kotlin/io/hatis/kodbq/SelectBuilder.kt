@@ -15,7 +15,7 @@ class SelectBuilder(
     )
 
     data class Returns(
-        val columns: Set<Column> = emptySet(),
+        val columns: Set<ReturnColumn> = emptySet(),
         val functions: Map<String, Function> = emptyMap()
     )
 
@@ -53,8 +53,11 @@ class SelectBuilder(
         val escape = dialect.escape
         with(select) {
             if (distinct) append("select distinct ") else append("select ")
-            val allColumns = returns.columns + groupByColumns
-            val allColumnNames = allColumns.map { columnToReturnField(it) } + getFunctions(returns, params)
+            val allColumnNames = (
+                    returns.columns.map { columnToReturnField(it) } +
+                            groupByColumns.map { it.toString() } +
+                            getFunctions(returns, params)
+                    ).toSet()
 
             if (allColumnNames.isEmpty()) {
                 append("*")
@@ -163,7 +166,7 @@ class SelectBuilder(
         delete(length - 1, length)
     }
 
-    private fun columnToReturnField(c: Column): String =
+    private fun columnToReturnField(c: ReturnColumn): String =
         if (c.alias != null)
             "$c as ${c.alias}"
         else

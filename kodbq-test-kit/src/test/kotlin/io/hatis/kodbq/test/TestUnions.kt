@@ -10,8 +10,8 @@ class TestUnions: StringSpec({
 
     "select with union in same table" {
         sqlSelect(table) {
-            where { column(id, 1)}
-            union { where { column(id, 2) } }
+            where { id eq 1 }
+            union { where { id eq 2 } }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"id\"=?\n" +
@@ -22,8 +22,8 @@ class TestUnions: StringSpec({
     }
     "select with union all" {
         sqlSelect(table) {
-            where { column(id, 1)}
-            union(all = true) { where { column(id, 2) } }
+            where { id eq 1 }
+            union(all = true) { where { id eq 2 } }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"id\"=?\n" +
@@ -39,8 +39,8 @@ class TestUnions: StringSpec({
         val id2 = table2.column("id")
 
         sqlSelect(table1) {
-            where { column(id1, 1)}
-            union(table2, all = true) { where { column(id2, 2) } }
+            where { id1 eq 1 }
+            union(table2, all = true) { where { id2 eq 2 } }
         }
             .expectSqlAndParams(
                 "select * from \"table1\" where \"table1\".\"id\"=?\n" +

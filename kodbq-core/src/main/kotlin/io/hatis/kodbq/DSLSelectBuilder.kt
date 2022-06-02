@@ -23,52 +23,77 @@ open class DSLSelectBuilder(
         this.dslReturnsBuilder = dslReturnsBuilder
     }
 
-    fun join(joinColumn: ColumnDefinition) = joinBuilder(
-        joinColumn.toColunm(dialect),
-        SelectBuilder.JoinMode.INNER
-    )
+    infix fun ColumnDefinition.joinOn(refCol: ColumnDefinition) {
+        buildJoin(
+            this.toColumn(dialect),
+            refCol.toColumn(dialect),
+            SelectBuilder.JoinMode.INNER
+        )
+    }
 
-    fun leftJoin(joinColumn: ColumnDefinition) = joinBuilder(
-        joinColumn.toColunm(dialect),
-        SelectBuilder.JoinMode.LEFT
-    )
+    infix fun ColumnDefinition.leftJoinOn(refCol: ColumnDefinition) {
+        buildJoin(
+            this.toColumn(dialect),
+            refCol.toColumn(dialect),
+            SelectBuilder.JoinMode.LEFT
+        )
+    }
 
 
-    fun rightJoin(joinColumn: ColumnDefinition) = joinBuilder(
-        joinColumn.toColunm(dialect),
-        SelectBuilder.JoinMode.RIGHT
-    )
+    infix fun ColumnDefinition.rightJoinOn(refCol: ColumnDefinition) {
+        buildJoin(
+            this.toColumn(dialect),
+            refCol.toColumn(dialect),
+            SelectBuilder.JoinMode.RIGHT
+        )
+    }
 
 
-    fun fullJoin(joinColumn: ColumnDefinition) = joinBuilder(
-        joinColumn.toColunm(dialect),
-        SelectBuilder.JoinMode.FULL
-    )
+    infix fun ColumnDefinition.fullJoinOn(refCol: ColumnDefinition) {
+        buildJoin(
+            this.toColumn(dialect),
+            refCol.toColumn(dialect),
+            SelectBuilder.JoinMode.FULL
+        )
+    }
 
     fun join(rd: ReferenceDefinition) {
-        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.INNER)
-            .on(rd.referredColumnDefinition)
+        buildJoin(
+            rd.columnDefinition.toColumn(dialect),
+            rd.referredColumnDefinition.toColumn(dialect),
+            SelectBuilder.JoinMode.INNER
+        )
     }
 
     fun leftJoin(rd: ReferenceDefinition) {
-        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.LEFT)
-            .on(rd.referredColumnDefinition)
+        buildJoin(
+            rd.columnDefinition.toColumn(dialect),
+            rd.referredColumnDefinition.toColumn(dialect),
+            SelectBuilder.JoinMode.LEFT
+        )
     }
 
 
     fun rightJoin(rd: ReferenceDefinition) {
-        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.RIGHT)
-            .on(rd.referredColumnDefinition)
+        buildJoin(
+            rd.columnDefinition.toColumn(dialect),
+            rd.referredColumnDefinition.toColumn(dialect),
+            SelectBuilder.JoinMode.RIGHT
+        )
     }
 
 
     fun fullJoin(rd: ReferenceDefinition) {
-        joinBuilder(rd.columnDefinition.toColunm(dialect), SelectBuilder.JoinMode.FULL)
-            .on(rd.referredColumnDefinition)
+        buildJoin(
+            rd.columnDefinition.toColumn(dialect),
+            rd.referredColumnDefinition.toColumn(dialect),
+            SelectBuilder.JoinMode.FULL
+        )
     }
 
-    private fun joinBuilder(joinColumn: Column, joinMode: SelectBuilder.JoinMode) =
-        JoinBuilder(joins, joinColumn, joinMode)
+    private fun buildJoin(joinColumn: Column, onColumn: Column, joinMode: SelectBuilder.JoinMode) {
+        joins += SelectBuilder.Join(joinColumn, onColumn, joinMode)
+    }
 
     fun where(builderActions: DSLSelectConditionBuilder.() -> Unit) {
         val dslConditionBuilder = DSLSelectConditionBuilder(dialect)
@@ -78,7 +103,7 @@ open class DSLSelectBuilder(
     }
 
     fun groupBy(vararg cds: ColumnDefinition) {
-        cds.forEach { groupByColumns += it.toColunm(dialect) }
+        cds.forEach { groupByColumns += it.toColumn(dialect) }
     }
 
     fun having(builderActions: DSLHavingBuilder.() -> Unit) {
@@ -120,18 +145,4 @@ open class DSLSelectBuilder(
         groupByColumns = groupByColumns,
         unionAll = unionAll
     )
-
-    class JoinBuilder(
-        private val joins: MutableList<SelectBuilder.Join>,
-        private val joinColumn: Column,
-        private val joinMode: SelectBuilder.JoinMode
-    ) {
-        infix fun on(cd: ColumnDefinition) {
-            joins += SelectBuilder.Join(
-                joinColumn,
-                cd.toColunm(joinColumn.dialect),
-                joinMode
-            )
-        }
-    }
 }

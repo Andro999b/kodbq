@@ -13,7 +13,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: LT" {
         val value = 0
         sqlSelect(table) {
-            where { column(col) lt value }
+            where { col lt value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"<?",
@@ -23,7 +23,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: GT" {
         val value = 0
         sqlSelect(table) {
-            where { column(col) gt value }
+            where { col gt value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\">?",
@@ -33,7 +33,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: LTE" {
         val value = 0
         sqlSelect(table) {
-            where { column(col) lte value }
+            where { col lte value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"<=?",
@@ -43,7 +43,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: GTE" {
         val value = 0
         sqlSelect(table) {
-            where { column(col) gte value }
+            where { col gte value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\">=?",
@@ -53,7 +53,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: EQ" {
         val value = 0
         sqlSelect(table) {
-            where { column(col) eq value }
+            where { col eq value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"=?",
@@ -63,7 +63,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: NEQ" {
         val value = 0
         sqlSelect(table) {
-            where { column(col) neq value }
+            where { col neq value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"!=?",
@@ -73,7 +73,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: LIKE" {
         val value = "test"
         sqlSelect(table) {
-            where { column(col) like value }
+            where { col like value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\" like ?",
@@ -83,7 +83,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: IN for postgres" {
         val value = arrayOf(0, 1, 2)
         sqlSelect(table) {
-            where { column(col) inArray value }
+            where { col `in` value }
         }
             .apply {
                 buildOptions = buildOptions.copy(expandIn = false)
@@ -96,7 +96,7 @@ class TestWhereOps : StringSpec({
     "select form table with op: IN for mysql" {
         val value = arrayOf(0, 1, 2)
         sqlSelect(table, dialect = SqlDialect.MY_SQL) {
-            where { column(col) inArray value }
+            where { col `in` value }
         }
             .expectSqlAndParams(
                 "select * from `table` where `table`.`col` in(?,?,?)",
@@ -105,13 +105,13 @@ class TestWhereOps : StringSpec({
     }
     "select from table where col is null" {
         sqlSelect(table, dialect = SqlDialect.MY_SQL) {
-            where { columnIsNull(col) }
+            where { col.isNull() }
         }
             .expectSqlAndParams("select * from `table` where `table`.`col` is null")
     }
     "select from table where col is not null" {
         sqlSelect(table, dialect = SqlDialect.MY_SQL) {
-            where { columnNotNull(col) }
+            where { col.notNull() }
         }
             .expectSqlAndParams("select * from `table` where `table`.`col` is not null")
     }
@@ -126,50 +126,10 @@ class TestWhereOps : StringSpec({
         }
             .expectSqlAndParams("select * from [table] where json_value([table].[col], '\$.name')=?", listOf(name))
     }
-    "select from table with multiple conditions map api" {
-        val value = 1
-        val list = listOf("str1")
-
-        val nullCol = table.column("null_col")
-        val collectionCol = table.column("collection")
-        sqlSelect(table, dialect = SqlDialect.MY_SQL) {
-            where {
-                columns(mapOf(
-                    col to value,
-                    nullCol to null,
-                    collectionCol to list
-                ))
-            }
-        }
-            .expectSqlAndParams(
-                "select * from `table` where `table`.`col`=? and `table`.`null_col` is null and `table`.`collection` in(?)",
-                listOf(value) + list
-            )
-    }
-    "select from table with multiple conditions pairs list api" {
-        val value = 1
-        val list = listOf("str1")
-
-        val nullCol = table.column("null_col")
-        val collectionCol = table.column("collection")
-        sqlSelect(table, dialect = SqlDialect.MY_SQL) {
-            where {
-                columns(
-                    col to value,
-                    nullCol to null,
-                    collectionCol to list
-                )
-            }
-        }
-            .expectSqlAndParams(
-                "select * from `table` where `table`.`col`=? and `table`.`null_col` is null and `table`.`collection` in(?)",
-                listOf(value) + list
-            )
-    }
     "select with column condition api: eq" {
         val value = "string"
         sqlSelect(table) {
-            where { column(col) eq value }
+            where { col eq value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"=?",
@@ -179,7 +139,7 @@ class TestWhereOps : StringSpec({
     "select with column condition api: neq" {
         val value = "string"
         sqlSelect(table) {
-            where { column(col) neq value }
+            where { col neq value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"!=?",
@@ -189,7 +149,7 @@ class TestWhereOps : StringSpec({
     "select with column condition api: lt" {
         val value = 10
         sqlSelect(table) {
-            where { column(col) lt value }
+            where { col lt value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"<?",
@@ -199,7 +159,7 @@ class TestWhereOps : StringSpec({
     "select with column condition api: gt" {
         val value = 10
         sqlSelect(table) {
-            where { column(col) gt value }
+            where { col gt value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\">?",
@@ -209,7 +169,7 @@ class TestWhereOps : StringSpec({
     "select with column condition api: lte" {
         val value = 10
         sqlSelect(table) {
-            where { column(col) lte value }
+            where { col lte value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\"<=?",
@@ -219,7 +179,7 @@ class TestWhereOps : StringSpec({
     "select with column condition api: gte" {
         val value = 10
         sqlSelect(table) {
-            where { column(col) gte value }
+            where { col gte value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\">=?",
@@ -229,7 +189,7 @@ class TestWhereOps : StringSpec({
     "select with column condition api: like" {
         val value = "str1"
         sqlSelect(table) {
-            where { column(col) like value }
+            where { col like value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\" like ?",
@@ -239,7 +199,7 @@ class TestWhereOps : StringSpec({
     "select with column condition api: in" {
         val value = setOf("str1", "str2")
         sqlSelect(table) {
-            where { column(col) `in` value }
+            where { col `in` value }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\" in(?,?)",
@@ -248,7 +208,7 @@ class TestWhereOps : StringSpec({
     }
     "select with column condition api: is null" {
         sqlSelect(table) {
-            where { column(col).isNull() }
+            where { col.isNull() }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\" is null"
@@ -256,7 +216,7 @@ class TestWhereOps : StringSpec({
     }
     "select with column condition api: not null" {
         sqlSelect(table) {
-            where { column(col).notNull() }
+            where { col.notNull() }
         }
             .expectSqlAndParams(
                 "select * from \"table\" where \"table\".\"col\" is not null"

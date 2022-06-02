@@ -1,10 +1,9 @@
 package io.hatis.kodbq
 
-class Column(
+open class Column(
     val name: String,
     val dialect: SqlDialect,
-    val table: String? = null,
-    val alias: String? = null
+    val table: String? = null
 ): Named {
     val isStar = name == "*"
     val escapeTable = table?.let { dialect.escape(table) }

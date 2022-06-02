@@ -21,8 +21,8 @@ class NativeSqlColumn(
         private val paramPlaceholder: (Int) -> String
     ) {
         val dialect = column.dialect
-        fun column(cd: ColumnDefinition) = cd.toColunm(dialect)
-        fun c(cd: ColumnDefinition) = cd.toColunm(dialect)
+        fun column(cd: ColumnDefinition) = cd.toColumn(dialect)
+        fun c(cd: ColumnDefinition) = cd.toColumn(dialect)
 
         val c = column
 

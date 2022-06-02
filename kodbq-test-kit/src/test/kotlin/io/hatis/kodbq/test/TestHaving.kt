@@ -8,26 +8,26 @@ import io.kotest.core.spec.style.StringSpec
 
 class TestHaving: StringSpec({
     beforeTest { kodbqDialect = SqlDialect.SQL92 }
-    
-    val table = Table("table")
-    val col = table.column("col")
-    val col1 = table.column("col1")
-    val col2 = table.column("col2")
+
+    class TestTable: Table("table") {
+        val col = column("col")
+        val col1 = column("col1")
+        val col2 = column("col2")
+    }
+    val table = TestTable()
 
     "should not add having without group by" {
         sqlSelect(table) {
-            having {
-                column(col, 1)
-            }
+            having { table.col eq 1 }
         }
             .expectSqlAndParams("select * from \"table\"")
     }
     "select having column EQ op" {
         val value = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
-                column(col1, value)
+                table.col1 eq value
             }
         }
             .expectSqlAndParams(
@@ -41,11 +41,11 @@ class TestHaving: StringSpec({
         val value1 = 1
         val value2 = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
-                column(col1, value1)
+                table.col1 eq value1
                 or {
-                    column(col1, value2)
+                    table.col1 eq value2
                 }
             }
         }
@@ -59,9 +59,9 @@ class TestHaving: StringSpec({
     "select having column with sum" {
         val value = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
-                sum(col2) gt value
+                sum(table.col2) gt value
             }
         }
             .expectSqlAndParams(
@@ -74,9 +74,9 @@ class TestHaving: StringSpec({
     "select having column with avg" {
         val value = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
-                avg(col2) gt value
+                avg(table.col2) gt value
             }
         }
             .expectSqlAndParams(
@@ -89,9 +89,9 @@ class TestHaving: StringSpec({
     "select having column with min" {
         val value = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
-                min(col2) gt value
+                min(table.col2) gt value
             }
         }
             .expectSqlAndParams(
@@ -104,9 +104,9 @@ class TestHaving: StringSpec({
     "select having column with max" {
         val value = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
-                max(col2) gt value
+                max(table.col2) gt value
             }
         }
             .expectSqlAndParams(
@@ -119,7 +119,7 @@ class TestHaving: StringSpec({
     "select having column with count" {
         val value = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
                 count() gt value
             }
@@ -134,9 +134,9 @@ class TestHaving: StringSpec({
     "select having column with count by column" {
         val value = 1
         sqlSelect(table) {
-            groupBy(col1)
+            groupBy(table.col1)
             having {
-                count(col1) gt value
+                count(table.col1) gt value
             }
         }
             .expectSqlAndParams(

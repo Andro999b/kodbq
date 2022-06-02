@@ -5,8 +5,14 @@ data class ReferenceDefinition(
     val referredColumnDefinition: ColumnDefinition
 )
 
-data class ColumnDefinition(val table: Table, val name: String) {
-    internal fun toColunm(dialect: SqlDialect, alias: String? = null) = Column(
+data class ColumnDefinition(val table: Table, val name: String): Conditionable {
+    internal fun toColumn(dialect: SqlDialect) = Column(
+        table = table.name,
+        name = name,
+        dialect = dialect,
+    )
+
+    internal fun toReturnColumn(dialect: SqlDialect, alias: String? = null) = ReturnColumn(
         table = table.name,
         name = name,
         dialect = dialect,
@@ -14,6 +20,7 @@ data class ColumnDefinition(val table: Table, val name: String) {
     )
 
     infix fun refernce(cd: ColumnDefinition) = ReferenceDefinition(this, cd)
+    override fun toConditionName(dialect: SqlDialect) = toColumn(dialect)
 }
 
 open class Table(internal val name: String) {

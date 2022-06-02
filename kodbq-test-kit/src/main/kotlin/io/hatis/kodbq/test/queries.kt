@@ -37,11 +37,11 @@ fun selectUsersNames() = sqlSelect(Users) {
 }
 
 fun selectByUserId(userId: Long) = sqlSelect(Users) {
-    where { column(Users.id, userId) }
+    where { Users.id eq userId }
 }
 
 fun selectByUserIds(userId: List<Long>) = sqlSelect(Users) {
-    where { columns(Users.id to userId) }
+    where { Users.id `in` userId }
 }
 
 fun selectUsersWithOffset(offset: Int, limit: Int) = sqlSelect(Users) {
@@ -57,22 +57,22 @@ fun selectUsersInRange(from: Int, to: Int) = sqlSelect(Users) {
 
 fun selectUserAgeBetween(from: Int, to: Int) = sqlSelect(Users) {
     where {
-        column(Users.age) gte from
+        Users.age gte from
         and {
-            column(Users.age) lte to
+            Users.age lte to
         }
     }
 }
 
 fun selectUserWithNameLike(name: String) = sqlSelect(Users) {
     where {
-        column(Users.name) like name
+        Users.name like name
     }
 }
 
 fun selectDeletedUsers() = sqlSelect(Users) {
     where {
-        columnNotNull(Users.deleted)
+        Users.deleted.notNull()
     }
 }
 
@@ -85,17 +85,17 @@ fun selectUsersNameAndAge() = sqlSelect(Users) {
 
 fun selectOrderSince(time: OffsetDateTime) = sqlSelect(Orders) {
     where {
-        column(Orders.created) gt time
+        Orders.created gt time
     }
 }
 
 fun selectOrderUntil(time: OffsetDateTime) = sqlSelect(Orders) {
     where {
-        column(Orders.created) lt time
+        Orders.created lt time
     }
 }
 
-fun selectOrderById(id: Long) = sqlSelect(Orders) { where { column(Orders.id, id) } }
+fun selectOrderById(id: Long) = sqlSelect(Orders) { where { Orders.id eq id } }
 
 fun selectUserOrders(userId: Long) = sqlSelect(Orders) {
     returns {
@@ -103,8 +103,8 @@ fun selectUserOrders(userId: Long) = sqlSelect(Orders) {
         column(Users.name)
         column(Users.id, "userid")
     }
-    join(Users.id) on Orders.userId
-    where { column(Orders.userId) eq userId }
+    Users.id joinOn Orders.userId
+    where { Orders.userId eq userId }
 }
 
 fun selectUsersWithOrderMinPrice(minPrice: Int) = sqlSelect(Orders) {
@@ -121,11 +121,11 @@ fun selectUsersOrdersFrom(from: OffsetDateTime) = sqlSelect(Orders) {
         column(Users.id, "userid")
         column(OrderStatus.status, "order_status")
     }
-    join(Users.id) on Orders.userId
+    Users.id joinOn Orders.userId
     join(OrderStatus.ordersRef)
     where {
-        column(Orders.created) gte from
-        column(Users.deleted).isNull()
+        Orders.created gte from
+        Users.deleted.isNull()
     }
 }
 
@@ -164,17 +164,17 @@ fun selectUsersWithAgeInRanges(ranges: Collection<IntRange>) = sqlSelect(Users) 
     where {
         ranges.forEach { range ->
             or {
-                column(Users.age) gte range.first
-                column(Users.age) lte range.last
+                Users.age gte range.first
+                Users.age lte range.last
             }
         }
     }
 }
 
 fun selectUserIdsOfLaptopAndChargerOrders() = sqlSelect(Orders) {
-    where { column(Orders.article, "laptop") }
+    where { Orders.article eq "laptop" }
     union(all = true) {
-        where { column(Orders.article, "charger") }
+        where { Orders.article eq "charger" }
     }
 }
 
@@ -201,20 +201,20 @@ fun updateOrder(orderId: Long, article: String, price: Double) = sqlUpdate(Order
             Orders.price to price
         )
     }
-    where { column(Orders.id, orderId) }
+    where { Orders.id eq orderId }
 }
 
 fun deleteOrder(orderId: Long) = sqlDelete(Orders) {
-    where { column(Orders.id, orderId) }
+    where { Orders.id eq orderId }
 }
 
 fun deleteOrdersWithDateRanges(ranges: Collection<Pair<OffsetDateTime, OffsetDateTime>>) = sqlDelete(Orders) {
     where {
         ranges.forEach { (first, second) ->
             or {
-                column(Orders.created) gt first
+                Orders.created gt first
                 and {
-                    column(Orders.created) lt second
+                    Orders.created lt second
                 }
             }
         }
