@@ -33,7 +33,7 @@ fun executorFactory(jdbcTemplate: JdbcTemplate): ExecuteAndGetFun {
                 val result = execute(jdbcTemplate)
                 if (dialect != SqlDialect.MS_SQL && generatedKeys.isNotEmpty()) {
                     result.generatedKeys.forAtLeastOne { map ->
-                        should { map.keys.containsAll(generatedKeys) }
+                        should { map.keys.containsAll(generatedKeys.map { it.name }) }
                     }
                 }
                 listOf(mapOf("affectedRows" to result.affectedRows))

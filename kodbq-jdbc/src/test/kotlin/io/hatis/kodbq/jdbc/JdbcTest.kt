@@ -22,7 +22,7 @@ abstract class JdbcTest(url: String, sqlDialect: SqlDialect): StringSpec({
                 val result = execute(dataSource)
                 if(dialect != SqlDialect.MS_SQL && generatedKeys.isNotEmpty()) {
                     result.generatedKeys.forAtLeastOne { map ->
-                        should { map.keys.containsAll(generatedKeys) }
+                        should { map.keys.containsAll(generatedKeys.map { it.name }) }
                     }
                 }
                 listOf(mapOf("affectedRows" to result.affectedRows))

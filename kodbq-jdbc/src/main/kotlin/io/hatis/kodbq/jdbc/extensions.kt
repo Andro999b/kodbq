@@ -26,7 +26,7 @@ fun executeUpdate(connection: Connection, sqlAndParams: Pair<String, List<Any?>>
 fun executeBatch(
     connection: Connection,
     sqlAndParams: Pair<String, List<List<Any?>>>,
-    generatedKeys: Set<String>,
+    generatedKeys: Set<Column>,
     dialect: SqlDialect
 ): InsertResult {
     val (sql, params) = sqlAndParams

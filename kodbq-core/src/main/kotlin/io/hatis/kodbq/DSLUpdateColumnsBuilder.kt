@@ -6,24 +6,16 @@ open class DSLUpdateColumnsBuilder(
 ) {
     internal val columns: MutableMap<Column, Any?> = mutableMapOf()
 
-    fun columns(cds: Map<ColumnDefinition, Any?>) {
-        cds.forEach { column(it.key, it.value) }
-    }
+    infix fun ColumnDefinition.to(value: Any?) {
+        if(this.table != table)
+            throw IllegalArgumentException("Column $this not belong table $table")
 
-    fun columns(vararg cds: Pair<ColumnDefinition, Any?>) {
-        cds.forEach { column(it.first, it.second) }
-    }
-
-    fun column(cd: ColumnDefinition, value: Any?) {
-        if(cd.table != table)
-            throw IllegalArgumentException("Column not belong table")
-        
-        columns[Column(cd.name, dialect)] = value
+        columns[Column(this.name, dialect)] = value
     }
 
     fun native(cd: ColumnDefinition, actions: NativeSqlColumn.Generator.() -> String?) {
         if(cd.table != table)
-            throw IllegalArgumentException("Column not belong table")
+            throw IllegalArgumentException("Column $cd not belong table $table")
 
         val column = Column(cd.name, dialect)
         columns[column] = NativeSqlColumn(column, actions)

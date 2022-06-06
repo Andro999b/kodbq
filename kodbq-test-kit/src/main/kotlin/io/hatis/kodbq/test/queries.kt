@@ -181,25 +181,19 @@ fun selectUserIdsOfLaptopAndChargerOrders() = sqlSelect(Orders) {
 fun insertOrders(orders: Collection<TestOrder>, returnIds: Boolean = true) = sqlInsert(Orders) {
     orders.forEach {
         values {
-            column(Orders.userId, it.userId)
-            columns(
-                mapOf(
-                    Orders.article to it.article,
-                    Orders.price to it.price
-                )
-            )
+            Orders.userId to it.userId
+            Orders.article to it.article
+            Orders.price to it.price
             native(Orders.created) { if (dialect == SqlDialect.MS_SQL) "getdate()" else "now()" }
         }
     }
-    if (returnIds) generatedKeys("id")
+    if (returnIds) generatedKeys(Orders.id)
 }
 
 fun updateOrder(orderId: Long, article: String, price: Double) = sqlUpdate(Orders) {
     set {
-        columns(
-            Orders.article to article,
-            Orders.price to price
-        )
+        Orders.article to article
+        Orders.price to price
     }
     where { Orders.id eq orderId }
 }

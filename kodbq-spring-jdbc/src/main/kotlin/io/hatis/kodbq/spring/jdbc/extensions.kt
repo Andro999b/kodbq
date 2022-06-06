@@ -14,7 +14,7 @@ private fun update(template: JdbcTemplate, sqlAndParams: Pair<String, List<Any?>
 private fun insert(
     template: JdbcTemplate,
     sqlAndParams: Pair<String, List<List<Any?>>>,
-    generatedKeys: Set<String>,
+    generatedKeys: Set<Column>,
     dialect: SqlDialect
 ): InsertResult {
     val (sql, params) = sqlAndParams

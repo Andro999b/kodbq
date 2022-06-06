@@ -4,7 +4,7 @@ class InsertBuilder(
     val table: Table,
     override val dialect: SqlDialect = SqlDialect.PG,
     val values: List<Map<Column, Any?>>,
-    val generatedKeys: Set<String> = emptySet()
+    val generatedKeys: Set<Column> = emptySet()
 ) : AbstractSqlBuilder() {
     private fun buildColumnsAndValue(
         outParams: MutableList<Any?>,
@@ -52,7 +52,7 @@ class InsertBuilder(
             generatedKeys.isNotEmpty() &&
             dialect == SqlDialect.MS_SQL
         ) {
-            sql += " output ${generatedKeys.joinToString(",") { "inserted.${dialect.escape(it)}" }}"
+            sql += " output ${generatedKeys.joinToString(",") { "inserted.${dialect.escape(it.name)}" }}"
         }
 
         sql += " values(${keyValues.joinToString(",") { it.second.toString() }})"
@@ -64,7 +64,7 @@ class InsertBuilder(
             generatedKeys.isNotEmpty() &&
             dialect == SqlDialect.PG
         ) {
-            sql += " returning ${generatedKeys.joinToString(",", transform = dialect.escape)}"
+            sql += " returning ${generatedKeys.joinToString(",") { dialect.escape(it.name) }}"
         }
 
         valuesItr.forEach {

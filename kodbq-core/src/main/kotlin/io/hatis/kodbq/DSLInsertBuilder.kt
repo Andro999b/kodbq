@@ -5,7 +5,7 @@ class DSLInsertBuilder(
     private val dialect: SqlDialect
 ) {
     private var values: MutableList<Map<Column, Any?>> = mutableListOf()
-    private var genKeys: Set<String> = emptySet()
+    private var genKeys: Set<Column> = emptySet()
 
     fun values(builderActions: DSLUpdateColumnsBuilder.() -> Unit) {
         val dslColumnsBuilder = DSLUpdateColumnsBuilder(table, dialect)
@@ -13,8 +13,13 @@ class DSLInsertBuilder(
         values.add(dslColumnsBuilder.columns)
     }
 
-    fun generatedKeys(vararg keys: String) {
-        genKeys = keys.toSet()
+    fun generatedKeys(vararg keys: ColumnDefinition) {
+        keys.forEach {
+            if(it.table != table)
+                throw IllegalArgumentException("Column $it not belong table $table")
+        }
+
+        genKeys = keys.map { it.toColumn(dialect) }.toSet()
     }
 
     internal fun createInsertBuilder() = InsertBuilder(

@@ -11,6 +11,7 @@ Library also provide ready to use integration with various db libs/frameworks.
 - [Supported Integrations](#supported-integrations)
 - [Getting Started](#getting-started)
 - [DSL Syntax example](#dsl-syntax-example)
+    - [Define schema object](#define-schema-object)
     - [Select all](#select-all)
     - [Select by id](#select-by-id)
     - [Select with filters](#select-with-filters)
@@ -63,12 +64,20 @@ dependencies {
 }
 ```
 Latest version can be found at [Jitpack](https://jitpack.io/#Andro999b/kodbq)  
+
+Define table schema object
+```kotlin
+object Users: Table("users") {
+    val id = column("id")
+}
+```
+
 Build some query
 
 ```kotlin
 val (sql, params) = 
-    sqlSelect("users") {
-        where { id(1) }
+    sqlSelect(Users) {
+        where { Users.id eq 1 }
     }
     .buildSqlAndParams()
 ```
@@ -76,8 +85,8 @@ val (sql, params) =
 or execute it(with jdbc integration)
 ```kotlin
 val resultSet =
-    sqlSelect("users") {
-        where { id(1) }
+    sqlSelect(Users) {    
+        where { Users.id eq 1 }
     }
     .execute(datasource)
 ```
@@ -86,45 +95,47 @@ all integration provide `execute` or `build` methods
 
 ## DSL Syntax example
 
+### Define schema object
+
+```kotlin
+object Users : Table("users") { // table name
+    val id = column("id") // column name
+    val name = column("name")
+    val age = column("age")
+    val created = column("created")
+    val deleted = column("deleted")
+}
+
+object Orders : Table("orders") {
+    val id = column("id")
+    val created = column("created")
+    val userId = column("user_id")
+    val price = column("price")
+    val article = column("article")
+    val userRef = userId refernce Users.id // table reference
+}
+```
+
 ### Select all
 
 ```kotlin
-sqlSelect("users")
+sqlSelect(Users)
 ```
 
 ### Select by id
 ```kotlin
-sqlSelect("users") { 
-    where { id(1L) } 
+sqlSelect(Users) { 
+    where { Users.id eq 1L } 
 }
 ```
 
 ### Select with filters
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     where {
-        column("name", "Bob")
-        column("age") gt 18 // gt, lt, gte, lte, eq, not, like, `in`
-        column("deleted").isNull() // isNotNull()
-    }
-}
-```
-
-filter by multiple fields
-```kotlin
-sqlSelect("users") {
-    where {
-        columns(
-            "age" to 18, // "age"=18
-            "name" to setOf("Alice", "Bob"), // "name" in ('Alice', 'Bob')
-            "deleted" to null // "deleted" is null
-        )
-        // or
-        columns(mapOf( // same with mapOf
-            "age" to 18,
-            "name" to setOf("Alice", "Bob"),
-            "deleted" to null
-        ))
+        Users.name eq "Bob"
+        Users.age gt 18
+        Users.delete.isNull() // isNotNull()
     }
 }
 ```
@@ -133,21 +144,21 @@ Filter with `and` & `or`
 
 several `colunm`/`colunms` call are works as `and` condition so
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     where {
-        column("age", 18)
-        column("name", "Bob")
+        Users.age eq 18
+        Users.name eq "Bob"
     }
 }
 ```
 will be converted to `"age"=18 and "name"='Bob'`  
 for `or` condition you need specify it directly with `or` block
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     where {
-        column("age", 18)
+        Users.age eq 18
         or {
-            column("age", 90) 
+          Users.age eq 90
         }
     }
 }
@@ -155,25 +166,25 @@ sqlSelect("users") {
 will be converted to `"age"=19 or "age"=90`  
 but if we want to filter all user with name "Bob" and age 18 or 90 this condition will not work
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     where {
-        column("name", "Bob")
-        column("age", 18)
+        Users.name eq "Bob"
+        Users.age eq 18
         or {
-            column("age", 90) 
+            Users.age eq 90
         }
     }
 }
 ```
 it will generate `("name" = "Bob" and "age"=19) or "age"=90`. In this case you need use `and` block
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     where {
-        column("name", "Bob")
+        Users.name eq "Bob"
         and {
-            column("age", 18)
+            Users.age eq 18
             or {
-                column("age", 90)
+                Users.age eq 90
             }
         }
     }
@@ -183,26 +194,26 @@ sqlSelect("users") {
 
 ### Columns list
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     returns {
-        columns("age", "name")
-        column("age", "user_age") // alias
+        columns(Users.name)
+        column(Users.age, "user_age") // alias
         columns(
-            "age" to "user_age",
-            "name" to "user_name"
+            Users.age to "user_age",
+            Users.name to "user_name"
         ) // multiple fields with
         count("users_count") // max, min, avg, sum
-        function("upper", "name", "upper_name") // upper(name) as upper_name
+        function("upper", Users.name, "upper_name") // upper(name) as upper_name
     }
 }
 ```
 
 ### Sort
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     sort {
-        asc("created", "age") // asc sort 
-        desc("name") // desc sort
+        asc(Users.created, Users.age) // asc sort 
+        desc(Users.name) // desc sort
         count() // sort by agg function in asc order. count(asc = false) -- desc order
     }
 }
@@ -210,7 +221,7 @@ sqlSelect("users") {
 
 ### Limit and offset
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     offset(10)
     limit(20)
     // or 
@@ -219,8 +230,8 @@ sqlSelect("users") {
 ```
 **NOTE:** When working with MS_SQL dialect it is mandatory to specify sort:
 ```kotlin
-sqlSelect("users", dialect = SqlDailect.MS_SQL) {
-    sort("id")
+sqlSelect(Users, dialect = SqlDailect.MS_SQL) {
+    sort(Users.id)
     offset(10)
     limit(20)
 }
@@ -228,17 +239,17 @@ sqlSelect("users", dialect = SqlDailect.MS_SQL) {
 
 ### Distinct
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     distict()
 }
 ```
 
 ### Group By
 ```kotlin
-sqlSelect("users") {
-    groupBy("age")
+sqlSelect(Users) {
+    groupBy(Users.age)
     // sort by multiple fields
-    groupBy("age", "name")
+    groupBy(Users.age, Users.name)
 }
 ```
 **NOTE:** All columns names passed to group be will be also adder to returning columns.  
@@ -247,11 +258,11 @@ E.G. first query will produce: `select "age" from "users" group by "age"`
 
 ### Having
 ```kotlin
-sqlSelect("users") {
-    groupBy("name")
+sqlSelect(Users) {
+    groupBy(Users.name)
     having {
-        min("age") gt 18
-        column("deleted").isNull
+        min(Users.age) gt 18
+        Users.deleted.isNull()
     }
 }
 ```
@@ -259,88 +270,56 @@ sqlSelect("users") {
 
 ### Joins 
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     // inner join
-    join("orders", "user_id") on "id"
+    join(Orders.userId) on Users.id
     // left join
-    leftJoin("orders", "user_id") on "id"
+    leftJoin(Orders.userId) on Users.id
     // right join
-    rightJoin("orders", "user_id") on "id"
+    rightJoin(Orders.userId) on Users.id
     // full join
-    fullJoin("orders", "user_id") on "id" 
+    fullJoin(Orders.userId) on Users.id
     // join third table
-    join("orders_status", "order_id").on("orders", "id")
-    
-    // return columns of joined tables
-    returns {
-        table("orders") {
-            columns("price")
-        }
-    }
-    
-    // filter by joined table
-    where {
-        table("orders") { column("price") gt 100 }
-        or {
-            table("orders") { column("price") lt 10 }
-        }
-    }
-    
-    // sort by joined table
-    sort {
-        table("orders") { asc("price") }
-    }
-    
-    // group by joined table
-    groupByTable("orders", "user_id")
-    
-    // having with joined table
-    having {
-        table("orders") {
-            count() gt 1
-        }
-    }
+    join(OrdersStatus.orderId).on(Orders.id)
+    // join using ref
+    join(Orders.userRef)
 }
 ```
 
 ### Unions
 ```kotlin
-sqlSelect("users") {
-    where { id(1) }
+sqlSelect(Users) {
+    where { Users.id eq 1 }
     union(all = true) { // return 2 identical rows with union all
-        where { id(1) } // returns, groupBy, sort, having...
+        where { Users.id eq 1 } // returns, groupBy, sort, having...
     }
-    union("users_archive") { // union with another table
-        where { id(2) }
+    union(UsersArchive) { // union with another table
+        where { UsersArchive.id eq 2 }
     }
 }
 ```
 
 ### Insert
 ```kotlin
-sqlInsert("users") {
+sqlInsert(Users) {
     values {
-        column("name", "Alice")
-        columns(
-            "age" to 18,
-            "gender" to "female"
-        )
+        Users.name to "Alice"
+        Users.age to 18
+        Users.gender to "female"
     }
     // returns generated keys (functionality depends on db driver)
-    generatedKeys("id")
+    generatedKeys(Users.id)
 }
 ```
 
 Batch insert
 ```kotlin
-sqlInsert("users") {
+sqlInsert(Users) {
     users.forEach { user ->
         values {
-            column("name", user.name)
-            columns(
-                "age" to user.age,
-                "gender" to user.gender
-            )
+            Users.name to user.name
+            Users.age to user.age
+            Users.gender to user.gender
         }
     }
 }
@@ -348,35 +327,35 @@ sqlInsert("users") {
 
 ### Delete 
 ```kotlin
-sqlDelete("users") {
+sqlDelete(Users) {
     where { // same dsl filter as in sqlSelect
-        column("name") eq "Jhon"
+        Users.name eq "Jhon"
     }
 }
 ```
 
 Delete all
 ```kotlin
-sqlDelete("users")
+sqlDelete(Users)
 ```
 
 ### Update
 ```kotlin
-sqlUpdate("users") {
-    values {
-        column("age", 60)
+sqlUpdate(Users) {
+    set {
+        Users.age to 60
     }
     where { // same dsl filter as in sqlSelect
-        column("name") eq "Jake"
+        Users.name eq "Jake"
     }
 }
 ```
 
 Update all
 ```kotlin
-sqlUpdate("users") {
-    values {
-        column("deleted", null)
+sqlUpdate(Users) {
+    set {
+        Users.deleted to null
     }
 }
 ```
@@ -384,14 +363,14 @@ sqlUpdate("users") {
 ### Native sql
 There is couple places where you can write your one sql part
 ```kotlin
-sqlSelect("users") {
+sqlSelect(Users) {
     returns {
         native { 
             // return true/false if column is null
-            "${c("deleted")} is null as deleted"
+            "${c(Users.deleted)} is null as deleted"
             // inside all native block context methods props available:
-            // c("colName")/column("colName") - return full escaped column name. E.g: "tableName"."colName"
-            // t("tableName")/table("tableName") - return escaped table name
+            // c(ColumnDefinition)/column(ColumnDefinition) - return full escaped column name. E.g: "tableName"."colName"
+            // t(Table)/table(Table) - return escaped table name
             // dialect - SQL dialect
             // v(1)/value(1) - add query parameter value
         }
@@ -399,7 +378,7 @@ sqlSelect("users") {
     where {
         native {
             // custom condition
-            "upper(${c("name")})=${v("BOB")}"
+            "upper(${c(Users.name)})=${v("BOB")}"
         }
     }
     having {
@@ -410,9 +389,9 @@ sqlSelect("users") {
     }
 }
 
-sqlInsert("users") {
+sqlInsert(Users) {
     values {
-        native("deleted") { // for insert and update you need specify column name
+        native(Users.deleted) { // for insert and update you need specify column name
             "now()"
             // some addition properties available here:
             // c/column - name of update/insert column
@@ -421,9 +400,9 @@ sqlInsert("users") {
     }
 }
 
-sqlUpdate("users") {
+sqlUpdate(Users) {
     set {
-        native("deleted") { // for insert and update you need specify column name
+        native(Users.deleted) { // for insert and update you need specify column name
             "now()"
             // some addition properties available here:
             // c/column - name of update/insert column
@@ -436,7 +415,7 @@ sqlUpdate("users") {
 also you can use `sql` builder to implement some custom generation logic
 ```kotlin
 sql {
-    "select * from ${t("users")} where ${c("name")}=${v("Bob")}"
+    "select * from ${t(Users)} where ${c(Users.name)}=${v("Bob")}"
 }
 ```
 
@@ -454,5 +433,5 @@ kodbqDialect = SqlDialect.MS_SQL
 or per request:
 
 ```kotlin
-sqlSelect("users", dialect = SqlDialect.MY_SQL)
+sqlSelect(Users, dialect = SqlDialect.MY_SQL)
 ```
