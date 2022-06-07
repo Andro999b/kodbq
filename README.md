@@ -232,7 +232,7 @@ sqlSelect(Users) {
 **NOTE:** When working with MS_SQL dialect it is mandatory to specify sort:
 ```kotlin
 sqlSelect(Users, dialect = SqlDailect.MS_SQL) {
-    sort(Users.id)
+    sort{asc(Users.id)}
     offset(10)
     limit(20)
 }
