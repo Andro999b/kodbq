@@ -10,7 +10,7 @@ fun <T> execute(connection: Connection, sqlAndParams: Pair<String, List<Any?>>, 
     val (sql, params) = sqlAndParams
     return connection.prepareStatement(sql).use { statement ->
         params.forEachIndexed { i, v -> statement.setObject(i + 1, v) }
-        mapper(statement.executeQuery())
+        statement.executeQuery().use { mapper(it) }
     }
 }
 
